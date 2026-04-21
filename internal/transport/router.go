@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/Max20050/gtc-users-auth/internal/middleware"
 	db "github.com/Max20050/gtc-users-auth/internal/repository/db"
 	"github.com/Max20050/gtc-users-auth/internal/transport/handlers"
+	oauthpkg "github.com/Max20050/gtc-users-auth/pkg/oauth"
 	"github.com/Max20050/gtc-users-auth/pkg/tokens"
 )
 
@@ -21,12 +23,12 @@ func NewRouter(pool *pgxpool.Pool, rdb *redis.Client, tm *tokens.Manager) *gin.E
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
 
-	// Liveness probe (no auth)
+	// Liveness probe
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	// Build service and handler
+	// ── Services ──────────────────────────────────────────────────────────
 	queries := db.New(pool)
 	authSvc := auth.NewService(
 		queries,
@@ -35,19 +37,38 @@ func NewRouter(pool *pgxpool.Pool, rdb *redis.Client, tm *tokens.Manager) *gin.E
 		parseDurationEnv("ACCESS_TOKEN_EXPIRY", 15*time.Minute),
 		parseDurationEnv("REFRESH_TOKEN_EXPIRY", 7*24*time.Hour),
 	)
+
+	// ── Handlers ──────────────────────────────────────────────────────────
 	authH := handlers.NewAuthHandler(authSvc, tm)
 
+	// Build the callback URL dynamically from the PORT env var
+	host := os.Getenv("PUBLIC_HOST")
+	if host == "" {
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+		host = fmt.Sprintf("http://localhost:%s", port)
+	}
+	googleProvider := oauthpkg.NewGoogleProvider(host + "/v1/auth/oauth/google/callback")
+	oauthH := handlers.NewOAuthHandler(authSvc, rdb, googleProvider)
+
+	// ── Routes ────────────────────────────────────────────────────────────
 	v1 := r.Group("/v1")
 	{
 		a := v1.Group("/auth")
 		{
-			// ── Public ──────────────────────────────────────────────────────
+			// ── Public email/password ──────────────────────────────────
 			a.POST("/register", authH.Register)
 			a.POST("/login", authH.Login)
 			a.POST("/refresh", authH.Refresh)
 			a.GET("/.well-known/jwks.json", authH.JWKS)
 
-			// ── Protected (valid JWT required) ───────────────────────────
+			// ── Google OAuth ───────────────────────────────────────────
+			a.GET("/oauth/google", oauthH.GoogleLogin)
+			a.GET("/oauth/google/callback", oauthH.GoogleCallback)
+
+			// ── Protected (valid JWT required) ─────────────────────────
 			protected := a.Group("/")
 			protected.Use(middleware.Auth(tm.PublicKey(), rdb))
 			{

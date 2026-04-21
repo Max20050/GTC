@@ -28,7 +28,14 @@ type TokenPair struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"` // access token TTL in seconds
+	ExpiresIn    int    `json:"expires_in"` // seconds
+}
+
+// OAuthUserInfo carries normalized data from any OAuth provider.
+type OAuthUserInfo struct {
+	Provider   string
+	ProviderID string
+	Email      string
 }
 
 // Service handles all authentication business logic.
@@ -59,9 +66,7 @@ func NewService(
 
 // ─── Register ────────────────────────────────────────────────────────────────
 
-// Register creates a new user and returns a token pair.
 func (s *Service) Register(ctx context.Context, email, password string) (*TokenPair, error) {
-	// 1. Check uniqueness
 	_, err := s.queries.GetUserByEmail(ctx, email)
 	if err == nil {
 		return nil, ErrEmailAlreadyExists
@@ -70,17 +75,16 @@ func (s *Service) Register(ctx context.Context, email, password string) (*TokenP
 		return nil, fmt.Errorf("checking email uniqueness: %w", err)
 	}
 
-	// 2. Hash password
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("hashing password: %w", err)
 	}
+	hashStr := string(hash)
 
-	// 3. Persist user
 	user, err := s.queries.CreateUser(ctx, db.CreateUserParams{
 		ID:           uuid.New(),
 		Email:        email,
-		PasswordHash: string(hash),
+		PasswordHash: &hashStr,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating user: %w", err)
@@ -91,7 +95,6 @@ func (s *Service) Register(ctx context.Context, email, password string) (*TokenP
 
 // ─── Login ───────────────────────────────────────────────────────────────────
 
-// Login verifies credentials and returns a token pair.
 func (s *Service) Login(ctx context.Context, email, password string) (*TokenPair, error) {
 	user, err := s.queries.GetUserByEmail(ctx, email)
 	if err != nil {
@@ -101,7 +104,12 @@ func (s *Service) Login(ctx context.Context, email, password string) (*TokenPair
 		return nil, fmt.Errorf("fetching user: %w", err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+	// OAuth-only users have no local password
+	if user.PasswordHash == nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(password)); err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
@@ -110,17 +118,14 @@ func (s *Service) Login(ctx context.Context, email, password string) (*TokenPair
 
 // ─── Logout ──────────────────────────────────────────────────────────────────
 
-// Logout blacklists the access token jti and revokes the refresh token.
 func (s *Service) Logout(ctx context.Context, jti string, accessTTL time.Duration, refreshToken string) error {
 	pipe := s.rdb.Pipeline()
-
 	if accessTTL > 0 {
 		pipe.Set(ctx, "blacklist:"+jti, "1", accessTTL)
 	}
 	if refreshToken != "" {
 		pipe.Del(ctx, "refresh:"+refreshToken)
 	}
-
 	if _, err := pipe.Exec(ctx); err != nil {
 		return fmt.Errorf("revoking tokens: %w", err)
 	}
@@ -129,10 +134,8 @@ func (s *Service) Logout(ctx context.Context, jti string, accessTTL time.Duratio
 
 // ─── Refresh ─────────────────────────────────────────────────────────────────
 
-// Refresh validates a refresh token, rotates it, and issues a new token pair.
 func (s *Service) Refresh(ctx context.Context, refreshToken string) (*TokenPair, error) {
 	key := "refresh:" + refreshToken
-
 	userID, err := s.rdb.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
@@ -141,7 +144,7 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (*TokenPair,
 		return nil, fmt.Errorf("reading refresh token: %w", err)
 	}
 
-	// Rotate: delete old token before issuing new pair (prevents token reuse)
+	// Rotate: delete old before issuing new (prevents token reuse)
 	if err := s.rdb.Del(ctx, key).Err(); err != nil {
 		return nil, fmt.Errorf("rotating refresh token: %w", err)
 	}
@@ -151,7 +154,6 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (*TokenPair,
 
 // ─── GetCurrentUser ───────────────────────────────────────────────────────────
 
-// GetCurrentUser returns public profile data for the given user UUID string.
 func (s *Service) GetCurrentUser(ctx context.Context, userID string) (*db.GetUserByIDRow, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
@@ -165,13 +167,66 @@ func (s *Service) GetCurrentUser(ctx context.Context, userID string) (*db.GetUse
 		}
 		return nil, fmt.Errorf("fetching user: %w", err)
 	}
-
 	return &user, nil
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── HandleOAuthCallback ─────────────────────────────────────────────────────
 
-// issueTokenPair signs an access token and stores a refresh token in Redis.
+// HandleOAuthCallback finds or creates a user from an OAuth provider, then
+// issues a token pair. It links the provider account to an existing user if
+// the email matches, or creates a new password-less user.
+func (s *Service) HandleOAuthCallback(ctx context.Context, info OAuthUserInfo) (*TokenPair, error) {
+	// 1. Check if this OAuth account is already linked
+	userID, err := s.queries.FindOAuthAccount(ctx, db.FindOAuthAccountParams{
+		Provider:   info.Provider,
+		ProviderID: info.ProviderID,
+	})
+	if err == nil {
+		// Returning user — just issue tokens
+		return s.issueTokenPair(ctx, userID.String())
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("finding oauth account: %w", err)
+	}
+
+	// 2. New OAuth account — find or create the user
+	var uid uuid.UUID
+	existingUser, err := s.queries.GetUserByEmail(ctx, info.Email)
+	if err == nil {
+		// Email exists — link this OAuth provider to the existing account
+		uid = existingUser.ID
+	} else if errors.Is(err, pgx.ErrNoRows) {
+		// Brand-new user — create without a password (OAuth-only)
+		newUser, err := s.queries.CreateUser(ctx, db.CreateUserParams{
+			ID:           uuid.New(),
+			Email:        info.Email,
+			PasswordHash: nil, // no local password
+		})
+		if err != nil {
+			return nil, fmt.Errorf("creating oauth user: %w", err)
+		}
+		uid = newUser.ID
+	} else {
+		return nil, fmt.Errorf("checking email for oauth: %w", err)
+	}
+
+	// 3. Persist the OAuth account link
+	email := info.Email
+	if err := s.queries.CreateOAuthAccount(ctx, db.CreateOAuthAccountParams{
+		ID:         uuid.New(),
+		UserID:     uid,
+		Provider:   info.Provider,
+		ProviderID: info.ProviderID,
+		Email:      &email,
+	}); err != nil {
+		return nil, fmt.Errorf("creating oauth account link: %w", err)
+	}
+
+	return s.issueTokenPair(ctx, uid.String())
+}
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
 func (s *Service) issueTokenPair(ctx context.Context, userID string) (*TokenPair, error) {
 	accessToken, _, err := s.tm.SignToken(userID, s.accessExpiry)
 	if err != nil {

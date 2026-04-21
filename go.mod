@@ -1,6 +1,6 @@
 module github.com/Max20050/gtc-users-auth
 
-go 1.23
+go 1.25.0
 
 require (
 	github.com/gin-gonic/gin v1.10.0
@@ -9,9 +9,11 @@ require (
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/redis/go-redis/v9 v9.5.1
 	golang.org/x/crypto v0.23.0
+	golang.org/x/oauth2 v0.36.0
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect

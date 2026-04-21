@@ -7,10 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// NOTE: This file is the hand-written equivalent of what `sqlc generate`
-// produces. Once you have a running Postgres instance, run `sqlc generate`
-// and delete this file — the output will be identical given the overrides
-// in sqlc.yaml.
+// NOTE: Hand-written equivalent of `sqlc generate` output.
+// Run `sqlc generate` against a live DB to replace this file.
 
 // ─── CreateUser ──────────────────────────────────────────────────────────────
 
@@ -75,8 +73,7 @@ WHERE id = $1
 `
 
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
-	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
-	if err != nil {
+	if _, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash); err != nil {
 		return fmt.Errorf("UpdateUserPassword: %w", err)
 	}
 	return nil
