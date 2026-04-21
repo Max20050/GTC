@@ -1,0 +1,90 @@
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: auth-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-auth_db}
+      POSTGRES_USER:     ${POSTGRES_USER:-auth_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-auth_user} -d ${POSTGRES_DB:-auth_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: auth-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # Migrate  (runs once, applies all up migrations, then exits)
+  # ---------------------------------------------------------------------------
+  migrate:
+    image: migrate/migrate:v4.17.1
+    container_name: auth-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./sql/schema:/migrations
+    command:
+      - "-path=/migrations"
+      - "-database=postgresql://${POSTGRES_USER:-auth_user}:${POSTGRES_PASSWORD:-secret}@postgres:5432/${POSTGRES_DB:-auth_db}?sslmode=disable"
+      - "up"
+    # Restart on failure so it retries if postgres isn't FULLY ready yet
+    restart: on-failure
+
+  # ---------------------------------------------------------------------------
+  # Auth Service
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      # Override DB/Redis URLs to use internal Docker network hostnames
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-auth_user}:${POSTGRES_PASSWORD:-secret}@postgres:5432/${POSTGRES_DB:-auth_db}?sslmode=disable"
+      REDIS_URL:    "redis://redis:6379"
+    volumes:
+      # Mount RSA private key from host; generate with: scripts/gen-keys.sh
+      - ./keys:/app/keys:ro
+
+volumes:
+  postgres_data:
+  redis_data:
