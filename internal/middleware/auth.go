@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"net/http"
 	"strings"
@@ -8,10 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
-	"crypto/rsa"
 )
 
-// Auth validates the RS256 JWT in the Authorization header and checks Redis blacklist.
+// Auth validates the RS256 JWT in the Authorization header and checks the
+// Redis blacklist. On success it sets user_id, jti, and exp in the Gin context.
 func Auth(publicKey *rsa.PublicKey, rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -40,8 +41,12 @@ func Auth(publicKey *rsa.PublicKey, rdb *redis.Client) gin.HandlerFunc {
 		}
 
 		jti, _ := claims["jti"].(string)
+		if jti == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing jti claim"})
+			return
+		}
 
-		// Check Redis blacklist
+		// Check Redis blacklist (revoked tokens)
 		ctx := c.Request.Context()
 		exists, err := rdb.Exists(ctx, "blacklist:"+jti).Result()
 		if err != nil || exists > 0 {
@@ -49,8 +54,10 @@ func Auth(publicKey *rsa.PublicKey, rdb *redis.Client) gin.HandlerFunc {
 			return
 		}
 
+		// Expose claims to handlers
 		c.Set("user_id", claims["sub"])
 		c.Set("jti", jti)
+		c.Set("exp", claims["exp"]) // float64 unix timestamp, used by logout handler
 		c.Next()
 	}
 }
