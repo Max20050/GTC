@@ -34,14 +34,14 @@ func NewManager(privateKeyPath string) (*Manager, error) {
 		return nil, fmt.Errorf("failed to decode PEM block from %s", privateKeyPath)
 	}
 
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("parsing RSA private key: %w", err)
 	}
 
 	return &Manager{
-		privateKey: privateKey,
-		publicKey:  &privateKey.PublicKey,
+		privateKey: privateKey.(*rsa.PrivateKey),
+		publicKey:  &privateKey.(*rsa.PrivateKey).PublicKey,
 		kid:        "auth-service-key-1",
 	}, nil
 }

@@ -43,7 +43,7 @@ func NewPool(ctx context.Context) (*pgxpool.Pool, error) {
 // connection string is more convenient.
 func buildDSN() string {
 	// Priority 1 — explicit host means we're running in Docker (or similar).
-	if host := os.Getenv("POSTGRES_HOST"); host != "" {
+	if host := envOr("POSTGRES_HOST", "localhost"); host != "" {
 		port := envOr("POSTGRES_PORT", "5432")
 		user := envOr("POSTGRES_USER", "auth_app")
 		pass := envOr("POSTGRES_PASSWORD", "secretauthapppassowrd")

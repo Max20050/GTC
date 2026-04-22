@@ -74,6 +74,8 @@ services:
         condition: service_completed_successfully
     ports:
       - "${PORT:-8080}:8080"
+    env_file:
+      - .env          # loads all vars; environment block below overrides what Docker needs
     environment:
       # Server
       PORT: "${PORT:-8080}"
