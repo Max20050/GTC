@@ -8,15 +8,15 @@ services:
     container_name: auth-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       ${POSTGRES_DB:-auth_db}
-      POSTGRES_USER:     ${POSTGRES_USER:-auth_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+      POSTGRES_DB:       auth_db
+      POSTGRES_USER:     auth_app
+      POSTGRES_PASSWORD: secretauthapppassowrd
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-auth_user} -d ${POSTGRES_DB:-auth_db}"]
+      test: ["CMD-SHELL", "pg_isready -U auth_app -d auth_db"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -40,7 +40,7 @@ services:
       retries: 10
 
   # ---------------------------------------------------------------------------
-  # Migrate  (runs once, applies all up migrations, then exits)
+  # Migrate  (runs once, applies all .up.sql files, then exits)
   # ---------------------------------------------------------------------------
   migrate:
     image: migrate/migrate:v4.17.1
@@ -52,9 +52,8 @@ services:
       - ./sql/schema:/migrations
     command:
       - "-path=/migrations"
-      - "-database=postgresql://${POSTGRES_USER:-auth_user}:${POSTGRES_PASSWORD:-secret}@postgres:5432/${POSTGRES_DB:-auth_db}?sslmode=disable"
+      - "-database=postgresql://auth_app:secretauthapppassowrd@postgres:5432/auth_db?sslmode=disable"
       - "up"
-    # Restart on failure so it retries if postgres isn't FULLY ready yet
     restart: on-failure
 
   # ---------------------------------------------------------------------------
@@ -74,29 +73,33 @@ services:
       migrate:
         condition: service_completed_successfully
     ports:
-      - "${PORT:-8080}:8080"
+      - "8080:8080"
     environment:
       # Server
-      PORT: "${PORT:-8080}"
-      GIN_MODE: "${GIN_MODE:-debug}"
-      # Database — POSTGRES_HOST forces the Docker network name.
-      # database.go builds the DSN from these parts when DATABASE_URL is absent.
+      PORT:     "8080"
+      GIN_MODE: "debug"
+
+      # Database — database.go builds the DSN from POSTGRES_* vars when
+      # DATABASE_URL is absent. POSTGRES_HOST points to the Docker service name.
       POSTGRES_HOST:     "postgres"
       POSTGRES_PORT:     "5432"
-      POSTGRES_USER:     "${POSTGRES_USER:-auth_user}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-secret}"
-      POSTGRES_DB:       "${POSTGRES_DB:-auth_db}"
+      POSTGRES_USER:     "auth_app"
+      POSTGRES_PASSWORD: "secretauthapppassowrd"
+      POSTGRES_DB:       "auth_db"
+
       # Redis
       REDIS_URL: "redis://redis:6379"
-      # JWT / RSA
-      PRIVATE_KEY_PATH:    "${PRIVATE_KEY_PATH:-./keys/private.pem}"
-      ACCESS_TOKEN_EXPIRY:  "${ACCESS_TOKEN_EXPIRY:-15m}"
-      REFRESH_TOKEN_EXPIRY: "${REFRESH_TOKEN_EXPIRY:-168h}"
-      # OAuth
+
+      # JWT / RSA keys
+      PRIVATE_KEY_PATH:     "./keys/private.pem"
+      ACCESS_TOKEN_EXPIRY:  "15m"
+      REFRESH_TOKEN_EXPIRY: "168h"
+
+      # Google OAuth — Docker Compose reads these from the .env file at the
+      # project root and substitutes them here before starting the container.
       GOOGLE_CLIENT_ID:     "${GOOGLE_CLIENT_ID}"
       GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
     volumes:
-      # Mount RSA private key from host; generate with: scripts/gen-keys.sh
       - ./keys:/app/keys:ro
 
 volumes:
