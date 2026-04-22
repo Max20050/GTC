@@ -2,7 +2,7 @@
 
 ## Repository
 This project is tracked in the GitHub repository:
-**https://github.com/Max20050/GTC-app-service**
+**https://github.com/Max20050/GTC**
 
 ---
 
@@ -31,6 +31,7 @@ This project is tracked in the GitHub repository:
 
 3. **Push to origin:**
    ```bash
+   git pull --rebase origin master
    git push origin master
    ```
 
