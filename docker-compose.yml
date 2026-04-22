@@ -75,14 +75,26 @@ services:
         condition: service_completed_successfully
     ports:
       - "${PORT:-8080}:8080"
-    env_file:
-      - .env
     environment:
-      # Inject Docker-internal hostnames. DATABASE_URL from .env points to
-      # localhost (for local dev); inside Docker we override with POSTGRES_HOST
-      # so database.go builds the correct DSN automatically.
-      POSTGRES_HOST: "postgres"
+      # Server
+      PORT: "${PORT:-8080}"
+      GIN_MODE: "${GIN_MODE:-debug}"
+      # Database — POSTGRES_HOST forces the Docker network name.
+      # database.go builds the DSN from these parts when DATABASE_URL is absent.
+      POSTGRES_HOST:     "postgres"
+      POSTGRES_PORT:     "5432"
+      POSTGRES_USER:     "${POSTGRES_USER:-auth_user}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-secret}"
+      POSTGRES_DB:       "${POSTGRES_DB:-auth_db}"
+      # Redis
       REDIS_URL: "redis://redis:6379"
+      # JWT / RSA
+      PRIVATE_KEY_PATH:    "${PRIVATE_KEY_PATH:-./keys/private.pem}"
+      ACCESS_TOKEN_EXPIRY:  "${ACCESS_TOKEN_EXPIRY:-15m}"
+      REFRESH_TOKEN_EXPIRY: "${REFRESH_TOKEN_EXPIRY:-168h}"
+      # OAuth
+      GOOGLE_CLIENT_ID:     "${GOOGLE_CLIENT_ID}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
     volumes:
       # Mount RSA private key from host; generate with: scripts/gen-keys.sh
       - ./keys:/app/keys:ro
