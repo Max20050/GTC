@@ -12,22 +12,27 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const defaultPublicKeyPath = "keys/public.pem"
+
 type AuthUser struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
 }
 
 func loadRSAPublicKey() *rsa.PublicKey {
-	keyPEM := os.Getenv("JWT_PUBLIC_KEY")
-	if keyPEM == "" {
-		log.Fatal("JWT_PUBLIC_KEY environment variable is not set")
+	path := os.Getenv("JWT_PUBLIC_KEY_PATH")
+	if path == "" {
+		path = defaultPublicKeyPath
 	}
-	// Support \n as a literal escape sequence in env vars (common in .env files)
-	keyPEM = strings.ReplaceAll(keyPEM, `\n`, "\n")
 
-	pub, err := jwt.ParseRSAPublicKeyFromPEM([]byte(keyPEM))
+	keyPEM, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("failed to parse JWT_PUBLIC_KEY: %v", err)
+		log.Fatalf("failed to read RSA public key from %s: %v", path, err)
+	}
+
+	pub, err := jwt.ParseRSAPublicKeyFromPEM(keyPEM)
+	if err != nil {
+		log.Fatalf("failed to parse RSA public key from %s: %v", path, err)
 	}
 	return pub
 }

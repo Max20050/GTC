@@ -18,6 +18,10 @@
 # Go module cache
 vendor/
 
+# RSA keys — never commit actual key files
+/keys/*.pem
+/keys/*.key
+
 # IDE
 .idea/
 .vscode/
