@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(go get *)",
+      "Bash(go mod *)",
+      "Bash(go test *)"
+    ]
+  }
+}
