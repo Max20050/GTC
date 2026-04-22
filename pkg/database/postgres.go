@@ -11,13 +11,13 @@ import (
 // NewPool creates a PostgreSQL connection pool.
 //
 // Connection priority:
-//  1. DATABASE_URL  — full DSN (used in local dev / CI)
-//  2. POSTGRES_*    — individual vars (used inside Docker Compose)
+//  1. POSTGRES_HOST — individual vars (Docker Compose sets this explicitly)
+//  2. DATABASE_URL  — full DSN (local dev / CI fallback)
 func NewPool(ctx context.Context) (*pgxpool.Pool, error) {
 	dsn := buildDSN()
 	if dsn == "" {
 		return nil, fmt.Errorf(
-			"no database configuration found: set DATABASE_URL or POSTGRES_HOST/USER/PASSWORD/DB",
+			"no database configuration found: set POSTGRES_HOST or DATABASE_URL",
 		)
 	}
 
@@ -33,26 +33,33 @@ func NewPool(ctx context.Context) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-// buildDSN returns a connection string, preferring DATABASE_URL, then
-// falling back to individual POSTGRES_* environment variables.
+// buildDSN returns a PostgreSQL connection string.
+//
+// POSTGRES_HOST takes priority — when it is set the DSN is built from
+// individual POSTGRES_* vars so Docker Compose can control each part
+// independently (e.g. setting POSTGRES_HOST="postgres" for the service name).
+//
+// DATABASE_URL is the fallback for local development and CI where a full
+// connection string is more convenient.
 func buildDSN() string {
+	// Priority 1 — explicit host means we're running in Docker (or similar).
+	if host := os.Getenv("POSTGRES_HOST"); host != "" {
+		port := envOr("POSTGRES_PORT", "5432")
+		user := envOr("POSTGRES_USER", "auth_app")
+		pass := envOr("POSTGRES_PASSWORD", "secretauthapppassowrd")
+		db := envOr("POSTGRES_DB", "auth_db")
+		ssl := envOr("POSTGRES_SSLMODE", "disable")
+
+		return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
+			user, pass, host, port, db, ssl)
+	}
+
+	// Priority 2 — full URL for local dev / CI.
 	if url := os.Getenv("DATABASE_URL"); url != "" {
 		return url
 	}
 
-	host := os.Getenv("POSTGRES_HOST")
-	if host == "" {
-		return "" // neither source is configured
-	}
-
-	port := envOr("POSTGRES_PORT", "5432")
-	user := envOr("POSTGRES_USER", "auth_user")
-	pass := envOr("POSTGRES_PASSWORD", "secret")
-	db := envOr("POSTGRES_DB", "auth_db")
-	ssl := envOr("POSTGRES_SSLMODE", "disable")
-
-	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
-		user, pass, host, port, db, ssl)
+	return ""
 }
 
 func envOr(key, fallback string) string {

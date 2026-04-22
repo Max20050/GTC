@@ -8,15 +8,15 @@ services:
     container_name: auth-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       ${POSTGRES_DB}
-      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -34,7 +34,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -76,27 +76,27 @@ services:
       - "${PORT:-8080}:8080"
     environment:
       # Server
-      PORT:     "${PORT:-8080}"
+      PORT: "${PORT:-8080}"
       GIN_MODE: "${GIN_MODE:-debug}"
 
       # Database — only POSTGRES_HOST is overridden to the Docker service name.
       # All other values come from .env via ${VAR} substitution.
-      POSTGRES_HOST:     "postgres"
-      POSTGRES_PORT:     "${POSTGRES_PORT:-5432}"
-      POSTGRES_USER:     "${POSTGRES_USER}"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_PORT: "${POSTGRES_PORT:-5432}"
+      POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRES_DB:       "${POSTGRES_DB}"
+      POSTGRES_DB: "${POSTGRES_DB}"
 
       # Redis — URL is overridden to use the Docker service name.
       REDIS_URL: "redis://redis:6379"
 
       # JWT / RSA keys
-      PRIVATE_KEY_PATH:     "${PRIVATE_KEY_PATH:-./keys/private.pem}"
-      ACCESS_TOKEN_EXPIRY:  "${ACCESS_TOKEN_EXPIRY:-15m}"
+      PRIVATE_KEY_PATH: "${PRIVATE_KEY_PATH:-./keys/private.pem}"
+      ACCESS_TOKEN_EXPIRY: "${ACCESS_TOKEN_EXPIRY:-15m}"
       REFRESH_TOKEN_EXPIRY: "${REFRESH_TOKEN_EXPIRY:-168h}"
 
       # Google OAuth
-      GOOGLE_CLIENT_ID:     "${GOOGLE_CLIENT_ID}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID}"
       GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
     volumes:
       - ./keys:/app/keys:ro
