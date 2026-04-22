@@ -8,15 +8,15 @@ services:
     container_name: auth-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       auth_db
-      POSTGRES_USER:     auth_app
-      POSTGRES_PASSWORD: secretauthapppassowrd
+      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U auth_app -d auth_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -52,7 +52,7 @@ services:
       - ./sql/schema:/migrations
     command:
       - "-path=/migrations"
-      - "-database=postgresql://auth_app:secretauthapppassowrd@postgres:5432/auth_db?sslmode=disable"
+      - "-database=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
       - "up"
     restart: on-failure
 
@@ -73,30 +73,29 @@ services:
       migrate:
         condition: service_completed_successfully
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:8080"
     environment:
       # Server
-      PORT:     "8080"
-      GIN_MODE: "debug"
+      PORT:     "${PORT:-8080}"
+      GIN_MODE: "${GIN_MODE:-debug}"
 
-      # Database — database.go builds the DSN from POSTGRES_* vars when
-      # DATABASE_URL is absent. POSTGRES_HOST points to the Docker service name.
+      # Database — only POSTGRES_HOST is overridden to the Docker service name.
+      # All other values come from .env via ${VAR} substitution.
       POSTGRES_HOST:     "postgres"
-      POSTGRES_PORT:     "5432"
-      POSTGRES_USER:     "auth_app"
-      POSTGRES_PASSWORD: "secretauthapppassowrd"
-      POSTGRES_DB:       "auth_db"
+      POSTGRES_PORT:     "${POSTGRES_PORT:-5432}"
+      POSTGRES_USER:     "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB:       "${POSTGRES_DB}"
 
-      # Redis
+      # Redis — URL is overridden to use the Docker service name.
       REDIS_URL: "redis://redis:6379"
 
       # JWT / RSA keys
-      PRIVATE_KEY_PATH:     "./keys/private.pem"
-      ACCESS_TOKEN_EXPIRY:  "15m"
-      REFRESH_TOKEN_EXPIRY: "168h"
+      PRIVATE_KEY_PATH:     "${PRIVATE_KEY_PATH:-./keys/private.pem}"
+      ACCESS_TOKEN_EXPIRY:  "${ACCESS_TOKEN_EXPIRY:-15m}"
+      REFRESH_TOKEN_EXPIRY: "${REFRESH_TOKEN_EXPIRY:-168h}"
 
-      # Google OAuth — Docker Compose reads these from the .env file at the
-      # project root and substitutes them here before starting the container.
+      # Google OAuth
       GOOGLE_CLIENT_ID:     "${GOOGLE_CLIENT_ID}"
       GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
     volumes:
