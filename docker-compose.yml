@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-workspace}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-workspace_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-workspace} -d ${POSTGRES_DB:-workspace_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  workspace-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3002}:3002"
+    environment:
+      PORT: "3002"
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-workspace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-workspace_db}?sslmode=disable"
+      JWT_PUBLIC_KEY_PATH: "keys/public.pem"
+    volumes:
+      # Mount the keys folder so public.pem is available without baking it into the image
+      - ./keys:/app/keys:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

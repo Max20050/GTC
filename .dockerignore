@@ -1,0 +1,15 @@
+.git
+.env
+.env.local
+*.env
+
+keys/*.pem
+keys/*.key
+
+dist/
+bin/
+tmp/
+vendor/
+
+*.test
+*.out
