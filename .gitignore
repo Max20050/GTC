@@ -1,0 +1,25 @@
+.env
+.env.local
+*.env
+
+/dist
+/bin
+/tmp
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go module cache
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
