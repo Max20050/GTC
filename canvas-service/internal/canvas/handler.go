@@ -9,16 +9,17 @@ import (
 )
 
 type Handler struct {
-	svc *Service
+	svc  *Service
+	auth func(http.HandlerFunc) http.HandlerFunc
 }
 
-func NewHandler(svc *Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc *Service, auth func(http.HandlerFunc) http.HandlerFunc) *Handler {
+	return &Handler{svc: svc, auth: auth}
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/health", h.health)
-	mux.HandleFunc("/canvas/", h.routeCanvas)
+	mux.HandleFunc("/canvas/", h.auth(h.routeCanvas))
 }
 
 func (h *Handler) health(w http.ResponseWriter, r *http.Request) {

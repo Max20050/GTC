@@ -2,7 +2,10 @@ module canvas-service
 
 go 1.22
 
-require go.mongodb.org/mongo-driver v1.15.0
+require (
+	github.com/golang-jwt/jwt/v5 v5.3.1
+	go.mongodb.org/mongo-driver v1.15.0
+)
 
 require (
 	github.com/golang/snappy v0.0.1 // indirect

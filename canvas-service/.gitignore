@@ -1,0 +1,29 @@
+.env
+.env.local
+*.env
+
+/dist
+/bin
+/tmp
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go module cache
+vendor/
+
+# Never commit private keys
+/keys/private*.pem
+/keys/*.key
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
