@@ -18,9 +18,8 @@
 # Go module cache
 vendor/
 
-# Never commit private keys
-/keys/private*.pem
-/keys/*.key
+# Never commit key files
+/keys/
 
 # IDE
 .idea/
