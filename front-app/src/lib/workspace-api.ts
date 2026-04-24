@@ -55,9 +55,21 @@ export interface TeamMember {
   role: 'lead' | 'member';
 }
 
+export type Visibility = 'public' | 'private';
+
+export interface CreateBoardInput {
+  name: string;
+  visibility: Visibility;
+  description?: string;
+  thumbnail_url?: string;
+}
+
 export interface PersonalBoard {
   id: string;
   name: string;
+  description?: string;
+  visibility: Visibility;
+  thumbnail_url?: string;
   owner_id?: string;
   created_at?: string;
 }
@@ -136,6 +148,6 @@ export const teamApi = {
 // ── Boards ───────────────────────────────────────────────────────────────────
 
 export const boardApi = {
-  createPersonal: (name: string) =>
-    request<PersonalBoard>('/boards', { method: 'POST', body: JSON.stringify({ name }) }),
+  createPersonal: (input: CreateBoardInput) =>
+    request<PersonalBoard>('/boards', { method: 'POST', body: JSON.stringify(input) }),
 };

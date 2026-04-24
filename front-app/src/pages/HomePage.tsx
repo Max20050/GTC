@@ -192,17 +192,23 @@ function CreateBoardModal({
   onCreated: (id: string) => void;
 }) {
   const createBoard = useWorkspace((s) => s.createBoard);
-  const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [name, setName]             = useState('');
+  const [description, setDescription] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('private');
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
     setLoading(true); setError('');
     try {
-      const board = await createBoard(name.trim());
-      setName('');
+      const board = await createBoard({
+        name: name.trim(),
+        visibility,
+        description: description.trim() || undefined,
+      });
+      setName(''); setDescription(''); setVisibility('private');
       onCreated(board.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create board');
@@ -212,7 +218,7 @@ function CreateBoardModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="New board">
+    <Modal open={open} onClose={onClose} title="New board" width={440}>
       <form onSubmit={handleSubmit}>
         {error && <div className={ws.errorBanner}>{error}</div>}
         <div className={ws.formField}>
@@ -223,11 +229,32 @@ function CreateBoardModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
+            required
           />
+        </div>
+        <div className={ws.formField}>
+          <label className={ws.label}>Description (optional)</label>
+          <textarea
+            className={ws.textarea}
+            placeholder="What is this architecture for?"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+        <div className={ws.formField}>
+          <label className={ws.label}>Visibility</label>
+          <select
+            className={ws.select}
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
+          >
+            <option value="private">Private — only you</option>
+            <option value="public">Public — anyone with the link</option>
+          </select>
         </div>
         <div className={ws.actions}>
           <button type="button" className={ws.btnSecondary} onClick={onClose}>Cancel</button>
-          <button type="submit" className={ws.btnPrimary} disabled={loading}>
+          <button type="submit" className={ws.btnPrimary} disabled={loading || !name.trim()}>
             {loading ? 'Creating…' : 'Create board'}
           </button>
         </div>

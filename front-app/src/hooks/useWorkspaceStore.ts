@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import {
   orgApi, teamApi, boardApi,
-  type Org, type OrgMember, type Team, type TeamMember, type PersonalBoard,
+  type Org, type OrgMember, type Team, type TeamMember, type PersonalBoard, type CreateBoardInput,
 } from '../lib/workspace-api';
 
 // ── Local persistence helpers ─────────────────────────────────────────────────
@@ -25,7 +25,7 @@ interface WorkspaceStore {
   boardIds: string[];
   boards: Record<string, PersonalBoard>;
   boardsLoading: boolean;
-  createBoard: (name: string) => Promise<PersonalBoard>;
+  createBoard: (input: CreateBoardInput) => Promise<PersonalBoard>;
   removeBoard: (id: string) => void;
 
   // Orgs
@@ -72,8 +72,8 @@ export const useWorkspace = create<WorkspaceStore>((set, get) => ({
   boards: {},
   boardsLoading: false,
 
-  createBoard: async (name) => {
-    const board = await boardApi.createPersonal(name);
+  createBoard: async (input) => {
+    const board = await boardApi.createPersonal(input);
     set((s) => {
       const ids = [board.id, ...s.boardIds.filter((id) => id !== board.id)];
       saveIds(LS_BOARD_IDS, ids);
