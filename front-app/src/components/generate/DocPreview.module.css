@@ -1,0 +1,33 @@
+.wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  color: var(--text-code);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  background: var(--bg-app);
+  border-radius: 6px;
+  padding: 16px;
+  min-height: 100%;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.empty p {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}

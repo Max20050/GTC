@@ -1,0 +1,42 @@
+.item {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  cursor: grab;
+  border-radius: 4px;
+  gap: 8px;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.item:hover {
+  background: var(--bg-card-hover);
+}
+
+.item.dragging {
+  opacity: 0.4;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.label {
+  flex: 1;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+.shortcut {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+}

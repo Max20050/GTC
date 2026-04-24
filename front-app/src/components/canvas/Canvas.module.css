@@ -1,0 +1,35 @@
+.canvasWrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.legend {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 6px 14px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.legendDot {
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+}

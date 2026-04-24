@@ -1,0 +1,66 @@
+:root {
+  /* Backgrounds */
+  --bg-app:        #0a0c0f;
+  --bg-canvas:     #0d0f12;
+  --bg-panel:      #111318;
+  --bg-card:       #161920;
+  --bg-card-hover: #1c2028;
+  --bg-inspector:  #111318;
+
+  /* Borders */
+  --border-subtle:  #1e2229;
+  --border-default: #2a303a;
+  --border-active:  #3d4655;
+
+  /* Text */
+  --text-primary:   #e8eaed;
+  --text-secondary: #8b95a3;
+  --text-muted:     #4a5260;
+  --text-code:      #a8d8b0;
+
+  /* Accents */
+  --accent-blue:   #4a9eff;
+  --accent-cyan:   #00d4aa;
+  --accent-green:  #34d058;
+  --accent-orange: #f0883e;
+  --accent-yellow: #e3b341;
+  --accent-pink:   #d2a8ff;
+  --accent-red:    #ff6b6b;
+
+  /* Node type accent strips */
+  --node-compute:  #4a9eff;
+  --node-data:     #34d058;
+  --node-external: #f0883e;
+  --node-region:   #ffffff08;
+
+  /* Typography */
+  --font-sans: 'Inter', 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Geist Mono', monospace;
+
+  --font-xs:   10px;
+  --font-sm:   11px;
+  --font-base: 13px;
+  --font-md:   15px;
+  --font-lg:   20px;
+  --font-xl:   24px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--font-base);
+  -webkit-font-smoothing: antialiased;
+}
