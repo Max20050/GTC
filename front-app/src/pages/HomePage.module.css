@@ -3,16 +3,17 @@
   flex-direction: column;
   height: 100%;
   background: var(--bg-app);
-  overflow: auto;
+  overflow: hidden;
 }
 
-.topbar {
+.topnav {
   height: 52px;
   padding: 0 32px;
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
+  background: var(--bg-panel);
 }
 
 .logo {
@@ -26,87 +27,254 @@
 
 .main {
   flex: 1;
-  padding: 32px;
-  max-width: 900px;
+  overflow-y: auto;
+  padding: 40px 32px;
+  max-width: 920px;
   margin: 0 auto;
   width: 100%;
 }
 
 .section {
-  margin-bottom: 40px;
+  margin-bottom: 44px;
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--text-secondary);
+  justify-content: space-between;
   margin-bottom: 16px;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
 }
 
-.newBoard,
+.sectionTitle h2 {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.sectionTitle button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Boards ── */
+
+.boardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
 .boardCard {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  text-align: left;
   overflow: hidden;
+  transition: border-color 0.15s;
 }
 
-.newBoard:hover,
 .boardCard:hover {
   border-color: var(--border-active);
-  background: var(--bg-card-hover);
-}
-
-.newBoard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 32px;
-  color: var(--text-muted);
-  font-size: var(--font-sm);
-  font-family: var(--font-sans);
-  min-height: 130px;
-}
-
-.newBoard:hover {
-  color: var(--text-secondary);
 }
 
 .boardPreview {
-  height: 90px;
+  width: 100%;
+  height: 100px;
   background: var(--bg-canvas);
-  border-bottom: 1px solid var(--border-subtle);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.boardPreviewDots {
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.boardFooter {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .boardInfo {
-  padding: 12px;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  min-width: 0;
 }
 
 .boardName {
   font-size: var(--font-sm);
   color: var(--text-primary);
-  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .boardMeta {
   font-size: var(--font-xs);
   color: var(--text-muted);
   font-family: var(--font-mono);
+}
+
+.boardActions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.boardActionBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.1s;
+}
+
+.boardActionBtn:hover {
+  color: var(--text-primary);
+}
+
+.boardDeleteBtn:hover {
+  color: var(--accent-red) !important;
+}
+
+.newBoardCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 148px;
+  background: transparent;
+  border: 1px dashed var(--border-default);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.newBoardCard:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 120px;
+  border: 1px dashed var(--border-default);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  max-width: 320px;
+}
+
+.emptyCard:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+/* ── Orgs ── */
+
+.orgList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.orgRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.orgRow:hover {
+  border-color: var(--border-active);
+  background: var(--bg-card-hover);
+}
+
+.orgAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.orgRowInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.orgRowName {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.orgRowDesc {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orgRowSlug {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.orgRowArrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
