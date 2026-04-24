@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -39,9 +39,18 @@ interface CanvasProps {
 }
 
 export function Canvas({ onZoomChange }: CanvasProps) {
-  const store = useDiagram();
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  // Select only stable action functions — never causes re-renders
+  const addNode      = useDiagram((s) => s.addNode);
+  const updateNode   = useDiagram((s) => s.updateNode);
+  const removeNode   = useDiagram((s) => s.removeNode);
+  const addConnector = useDiagram((s) => s.addConnector);
+  const removeConnector = useDiagram((s) => s.removeConnector);
+  const setSelection = useDiagram((s) => s.setSelection);
+  const setViewport  = useDiagram((s) => s.setViewport);
+  const nextNodeId   = useDiagram((s) => s.nextNodeId);
+  const nextConnectorId = useDiagram((s) => s.nextConnectorId);
 
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState<Node>([]);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
@@ -51,7 +60,7 @@ export function Canvas({ onZoomChange }: CanvasProps) {
     (connection: Connection) => {
       const newEdge: Edge = {
         ...connection,
-        id: store.nextConnectorId(),
+        id: nextConnectorId(),
         type: 'default',
         style: { stroke: PROTOCOL_COLORS.http_rest, strokeWidth: 1.5 },
         markerEnd: { type: MarkerType.ArrowClosed, color: PROTOCOL_COLORS.http_rest },
@@ -59,7 +68,7 @@ export function Canvas({ onZoomChange }: CanvasProps) {
         data: { protocol: 'http_rest' },
       };
       setRfEdges((eds) => addEdge(newEdge, eds));
-      store.addConnector({
+      addConnector({
         id: newEdge.id,
         sourceNodeId: connection.source ?? '',
         targetNodeId: connection.target ?? '',
@@ -68,69 +77,88 @@ export function Canvas({ onZoomChange }: CanvasProps) {
         meta: {},
       });
     },
-    [store, setRfEdges]
+    [nextConnectorId, setRfEdges, addConnector]
   );
 
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
       onNodesChange(changes);
-      changes.forEach((change) => {
+      for (const change of changes) {
         if (change.type === 'position' && change.position) {
-          store.updateNode(change.id, { position: change.position });
+          updateNode(change.id, { position: change.position });
+        } else if (change.type === 'remove') {
+          removeNode(change.id);
+        } else if (change.type === 'select') {
+          setSelection(change.selected
+            ? { type: 'node', id: change.id }
+            : { type: null, id: null }
+          );
         }
-        if (change.type === 'remove') {
-          store.removeNode(change.id);
-        }
-        if (change.type === 'select') {
-          if (change.selected) {
-            store.setSelection({ type: 'node', id: change.id });
-          } else {
-            store.setSelection({ type: null, id: null });
-          }
-        }
-      });
+      }
     },
-    [onNodesChange, store]
+    [onNodesChange, updateNode, removeNode, setSelection]
   );
 
   const handleEdgesChange: OnEdgesChange = useCallback(
     (changes) => {
       onEdgesChange(changes);
-      changes.forEach((change) => {
+      for (const change of changes) {
         if (change.type === 'remove') {
-          store.removeConnector(change.id);
+          removeConnector(change.id);
+        } else if (change.type === 'select') {
+          setSelection(change.selected
+            ? { type: 'connector', id: change.id }
+            : { type: null, id: null }
+          );
         }
-        if (change.type === 'select') {
-          if (change.selected) {
-            store.setSelection({ type: 'connector', id: change.id });
-          } else {
-            store.setSelection({ type: null, id: null });
-          }
-        }
-      });
+      }
     },
-    [onEdgesChange, store]
+    [onEdgesChange, removeConnector, setSelection]
   );
 
-  function addNodeAtPosition(nodeType: NodeType, position: { x: number; y: number }) {
-    const id = store.nextNodeId();
-    const newNode: Node = {
-      id,
-      type: 'default',
-      position,
-      data: { label: nodeType.replace(/_/g, ' '), nodeType, sublabel: '' },
+  const handleMoveEnd = useCallback(
+    (_: unknown, viewport: { x: number; y: number; zoom: number }) => {
+      onZoomChange(viewport.zoom);
+      setViewport(viewport);
+    },
+    [onZoomChange, setViewport]
+  );
+
+  const addNodeAtPosition = useCallback(
+    (nodeType: NodeType, position: { x: number; y: number }) => {
+      const id = nextNodeId();
+      const newNode: Node = {
+        id,
+        type: 'default',
+        position,
+        data: { label: nodeType.replace(/_/g, ' '), nodeType, sublabel: '' },
+      };
+      setRfNodes((nds) => [...nds, newNode]);
+      addNode({
+        id,
+        type: nodeType,
+        label: nodeType.replace(/_/g, ' '),
+        position,
+        size: { w: 140, h: 56 },
+        meta: {},
+      });
+      return id;
+    },
+    [nextNodeId, setRfNodes, addNode]
+  );
+
+  // Expose addNodeAtPosition for DnD in a side-effect, not during render
+  useEffect(() => {
+    (window as unknown as Record<string, unknown>).__canvasAddNode = (
+      nodeType: NodeType,
+      clientX: number,
+      clientY: number
+    ) => {
+      const rect = reactFlowWrapper.current?.getBoundingClientRect();
+      if (!rect) return;
+      addNodeAtPosition(nodeType, { x: clientX - rect.left - 70, y: clientY - rect.top - 28 });
     };
-    setRfNodes((nds) => [...nds, newNode]);
-    store.addNode({
-      id,
-      type: nodeType,
-      label: nodeType.replace(/_/g, ' '),
-      position,
-      size: { w: 140, h: 56 },
-      meta: {},
-    });
-    return id;
-  }
+  }, [addNodeAtPosition]);
 
   return (
     <div ref={setDropRef} className={styles.canvasWrapper}>
@@ -141,13 +169,10 @@ export function Canvas({ onZoomChange }: CanvasProps) {
           onNodesChange={handleNodesChange}
           onEdgesChange={handleEdgesChange}
           onConnect={onConnect}
+          onMoveEnd={handleMoveEnd}
           nodeTypes={NODE_TYPES}
           fitView
           deleteKeyCode="Delete"
-          onMoveEnd={(_, viewport) => {
-            onZoomChange(viewport.zoom);
-            store.setViewport(viewport);
-          }}
           style={{ background: 'var(--bg-canvas)' }}
         >
           <Background
@@ -167,8 +192,6 @@ export function Canvas({ onZoomChange }: CanvasProps) {
           <ConnectorLegend />
         </ReactFlow>
       </div>
-      {/* Expose addNodeAtPosition for DnD integration */}
-      <CanvasDnDReceiver addNode={addNodeAtPosition} wrapperRef={reactFlowWrapper} />
     </div>
   );
 }
@@ -192,22 +215,4 @@ function ConnectorLegend() {
       ))}
     </div>
   );
-}
-
-interface DnDReceiverProps {
-  addNode: (type: NodeType, pos: { x: number; y: number }) => string;
-  wrapperRef: React.RefObject<HTMLDivElement | null>;
-}
-
-function CanvasDnDReceiver({ addNode, wrapperRef }: DnDReceiverProps) {
-  (window as unknown as Record<string, unknown>).__canvasAddNode = (
-    nodeType: NodeType,
-    clientX: number,
-    clientY: number
-  ) => {
-    const rect = wrapperRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    addNode(nodeType, { x: clientX - rect.left - 70, y: clientY - rect.top - 28 });
-  };
-  return null;
 }
