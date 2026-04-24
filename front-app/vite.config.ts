@@ -5,6 +5,13 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      // Auth service (Go/GIN) — http://localhost:8080
+      // /auth-api/v1/auth/* → /v1/auth/*
+      '/auth-api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/auth-api/, ''),
+      },
       // Canvas service (Go) — http://localhost:8082
       '/canvas': {
         target: 'http://localhost:8082',
