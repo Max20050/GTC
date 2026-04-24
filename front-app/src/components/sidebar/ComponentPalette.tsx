@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import {
-  Server, Zap, Clock, Shield, Lock,
-  Database, FileText, Bolt, MessageSquare, HardDrive,
-  Monitor, Globe, ExternalLink,
-  Search, ChevronDown, ChevronRight
+  Server, Database, MessageSquare, Zap,
+  Cloud, Globe, Brain, Code2,
+  Search, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import { PaletteItem } from './PaletteItem';
 import styles from './ComponentPalette.module.css';
@@ -12,29 +11,24 @@ const GROUPS = [
   {
     label: 'COMPUTE',
     items: [
-      { type: 'microservice' as const, label: 'Microservice', shortcut: 'S', icon: <Server size={14} /> },
-      { type: 'serverless' as const, label: 'Serverless', shortcut: 'F', icon: <Zap size={14} /> },
-      { type: 'scheduled_job' as const, label: 'Scheduled Job', shortcut: 'T', icon: <Clock size={14} /> },
-      { type: 'gateway' as const, label: 'Gateway / LB', shortcut: 'G', icon: <Shield size={14} /> },
-      { type: 'auth_provider' as const, label: 'Auth Provider', shortcut: 'A', icon: <Lock size={14} /> },
+      { type: 'microservice' as const,  label: 'Microservice',  shortcut: 'S', icon: <Server size={14} /> },
+      { type: 'serverless' as const,    label: 'Serverless',    shortcut: 'F', icon: <Code2 size={14} /> },
     ],
   },
   {
     label: 'DATA',
     items: [
-      { type: 'sql_db' as const, label: 'SQL Database', shortcut: 'D', icon: <Database size={14} /> },
-      { type: 'document_store' as const, label: 'Document Store', shortcut: 'N', icon: <FileText size={14} /> },
-      { type: 'cache' as const, label: 'Cache / KV', shortcut: 'K', icon: <Bolt size={14} /> },
-      { type: 'message_queue' as const, label: 'Message Queue', shortcut: 'Q', icon: <MessageSquare size={14} /> },
-      { type: 'object_storage' as const, label: 'Object Storage', shortcut: 'O', icon: <HardDrive size={14} /> },
+      { type: 'database' as const,      label: 'Database',      shortcut: 'D', icon: <Database size={14} /> },
+      { type: 'queue' as const,         label: 'Message Queue', shortcut: 'Q', icon: <MessageSquare size={14} /> },
+      { type: 'cache' as const,         label: 'Cache / KV',    shortcut: 'K', icon: <Zap size={14} /> },
     ],
   },
   {
-    label: 'EDGE & EXTERNAL',
+    label: 'CLOUD & EXTERNAL',
     items: [
-      { type: 'client_app' as const, label: 'Client App', shortcut: 'C', icon: <Monitor size={14} /> },
-      { type: 'cdn' as const, label: 'CDN', shortcut: 'E', icon: <Globe size={14} /> },
-      { type: 'third_party' as const, label: '3rd-party', shortcut: 'X', icon: <ExternalLink size={14} /> },
+      { type: 'aws-service' as const,      label: 'AWS Service',      shortcut: 'A', icon: <Cloud size={14} /> },
+      { type: 'google-service' as const,   label: 'Google Service',   shortcut: 'G', icon: <Globe size={14} /> },
+      { type: 'ai-model-provider' as const,label: 'AI Model Provider',shortcut: 'I', icon: <Brain size={14} /> },
     ],
   },
 ];

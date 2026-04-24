@@ -23,23 +23,25 @@ import { useDiagram } from '../../hooks/useDiagram';
 import type { NodeType, Protocol } from '../../types/diagram';
 import styles from './Canvas.module.css';
 
-const NODE_TYPES = { default: NodeCard };
+// 'arch' avoids React Flow's .react-flow__node-default white background
+const NODE_TYPES = { arch: NodeCard };
 
 const PROTOCOL_COLORS: Record<Protocol, string> = {
-  http_rest: '#00d4aa',
-  grpc:      '#4a9eff',
-  sql:       '#34d058',
-  nosql:     '#f0883e',
-  pubsub:    '#e3b341',
-  websocket: '#d2a8ff',
+  'http-rest':     '#00d4aa',
+  'tcp':           '#a78bfa',
+  'message-queue': '#e3b341',
+  'database':      '#34d058',
+  'websocket':     '#d2a8ff',
+  'streaming':     '#f0883e',
 };
 
 interface CanvasProps {
   onZoomChange: (zoom: number) => void;
+  initialNodes?: Node[];
+  initialEdges?: Edge[];
 }
 
-export function Canvas({ onZoomChange }: CanvasProps) {
-  // Select only stable action functions — never causes re-renders
+export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [] }: CanvasProps) {
   const addNode      = useDiagram((s) => s.addNode);
   const updateNode   = useDiagram((s) => s.updateNode);
   const removeNode   = useDiagram((s) => s.removeNode);
@@ -51,30 +53,31 @@ export function Canvas({ onZoomChange }: CanvasProps) {
   const nextConnectorId = useDiagram((s) => s.nextConnectorId);
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [rfNodes, setRfNodes, onNodesChange] = useNodesState<Node>([]);
-  const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [rfNodes, setRfNodes, onNodesChange] = useNodesState<Node>(initialNodes);
+  const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
 
   const { setNodeRef: setDropRef } = useDroppable({ id: 'canvas-drop-zone' });
 
   const onConnect: OnConnect = useCallback(
     (connection: Connection) => {
+      const protocol: Protocol = 'http-rest';
+      const color = PROTOCOL_COLORS[protocol];
       const newEdge: Edge = {
         ...connection,
         id: nextConnectorId(),
-        type: 'default',
-        style: { stroke: PROTOCOL_COLORS.http_rest, strokeWidth: 1.5 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: PROTOCOL_COLORS.http_rest },
+        style: { stroke: color, strokeWidth: 1.5, opacity: 0.8 },
+        markerEnd: { type: MarkerType.ArrowClosed, color },
         label: 'HTTP REST',
-        data: { protocol: 'http_rest' },
+        data: { protocol, config: {} },
       };
       setRfEdges((eds) => addEdge(newEdge, eds));
       addConnector({
         id: newEdge.id,
         sourceNodeId: connection.source ?? '',
         targetNodeId: connection.target ?? '',
-        protocol: 'http_rest',
         label: 'HTTP REST',
-        meta: {},
+        protocol,
+        config: {},
       });
     },
     [nextConnectorId, setRfEdges, addConnector]
@@ -129,25 +132,22 @@ export function Canvas({ onZoomChange }: CanvasProps) {
       const id = nextNodeId();
       const newNode: Node = {
         id,
-        type: 'default',
+        type: 'arch',
         position,
-        data: { label: nodeType.replace(/_/g, ' '), nodeType, sublabel: '' },
+        data: { label: nodeType.replace(/-/g, ' '), nodeType, config: {} },
       };
       setRfNodes((nds) => [...nds, newNode]);
       addNode({
         id,
         type: nodeType,
-        label: nodeType.replace(/_/g, ' '),
+        label: nodeType.replace(/-/g, ' '),
         position,
-        size: { w: 140, h: 56 },
-        meta: {},
+        config: {},
       });
-      return id;
     },
     [nextNodeId, setRfNodes, addNode]
   );
 
-  // Expose addNodeAtPosition for DnD in a side-effect, not during render
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__canvasAddNode = (
       nodeType: NodeType,
@@ -186,9 +186,7 @@ export function Canvas({ onZoomChange }: CanvasProps) {
             nodeColor="var(--bg-card-hover)"
             maskColor="rgba(10,12,15,0.7)"
           />
-          <Controls
-            style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-subtle)' }}
-          />
+          <Controls />
           <ConnectorLegend />
         </ReactFlow>
       </div>
@@ -197,13 +195,13 @@ export function Canvas({ onZoomChange }: CanvasProps) {
 }
 
 function ConnectorLegend() {
-  const entries: { label: string; color: string }[] = [
-    { label: 'HTTP REST', color: '#00d4aa' },
-    { label: 'gRPC',      color: '#4a9eff' },
-    { label: 'SQL',       color: '#34d058' },
-    { label: 'NoSQL',     color: '#f0883e' },
-    { label: 'Pub/Sub',   color: '#e3b341' },
-    { label: 'WebSocket', color: '#d2a8ff' },
+  const entries = [
+    { label: 'HTTP REST',    color: '#00d4aa' },
+    { label: 'TCP',          color: '#a78bfa' },
+    { label: 'Msg Queue',    color: '#e3b341' },
+    { label: 'Database',     color: '#34d058' },
+    { label: 'WebSocket',    color: '#d2a8ff' },
+    { label: 'Streaming',    color: '#f0883e' },
   ];
   return (
     <div className={styles.legend}>

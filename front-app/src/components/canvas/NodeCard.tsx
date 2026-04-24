@@ -1,47 +1,46 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import {
-  Server, Zap, Clock, Shield, Lock,
-  Database, FileText, Bolt, MessageSquare, HardDrive,
-  Monitor, Globe, ExternalLink,
+  Server, Database, MessageSquare, Zap,
+  Cloud, Globe, Brain, Code2,
 } from 'lucide-react';
 import type { NodeType } from '../../types/diagram';
 import styles from './NodeCard.module.css';
 
 const ICONS: Record<NodeType, React.ReactNode> = {
-  microservice:   <Server size={13} />,
-  serverless:     <Zap size={13} />,
-  scheduled_job:  <Clock size={13} />,
-  gateway:        <Shield size={13} />,
-  auth_provider:  <Lock size={13} />,
-  sql_db:         <Database size={13} />,
-  document_store: <FileText size={13} />,
-  cache:          <Bolt size={13} />,
-  message_queue:  <MessageSquare size={13} />,
-  object_storage: <HardDrive size={13} />,
-  client_app:     <Monitor size={13} />,
-  cdn:            <Globe size={13} />,
-  third_party:    <ExternalLink size={13} />,
+  microservice:       <Server size={13} />,
+  database:           <Database size={13} />,
+  queue:              <MessageSquare size={13} />,
+  cache:              <Zap size={13} />,
+  'aws-service':      <Cloud size={13} />,
+  'google-service':   <Globe size={13} />,
+  'ai-model-provider':<Brain size={13} />,
+  serverless:         <Code2 size={13} />,
 };
 
 type NodeCategory = 'compute' | 'data' | 'external';
+
 const CATEGORY: Record<NodeType, NodeCategory> = {
-  microservice: 'compute', serverless: 'compute', scheduled_job: 'compute',
-  gateway: 'compute', auth_provider: 'compute',
-  sql_db: 'data', document_store: 'data', cache: 'data',
-  message_queue: 'data', object_storage: 'data',
-  client_app: 'external', cdn: 'external', third_party: 'external',
+  microservice:        'compute',
+  serverless:          'compute',
+  database:            'data',
+  queue:               'data',
+  cache:               'data',
+  'aws-service':       'external',
+  'google-service':    'external',
+  'ai-model-provider': 'external',
 };
 
 interface NodeData {
   label: string;
-  sublabel?: string;
   nodeType: NodeType;
+  config?: Record<string, unknown>;
 }
 
 export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps) {
-  const { label, sublabel, nodeType } = data as unknown as NodeData;
+  const { label, nodeType, config } = data as unknown as NodeData;
   const category = CATEGORY[nodeType] ?? 'compute';
+  const configKeys = config ? Object.keys(config) : [];
 
   return (
     <div className={`${styles.card} ${styles[category]} ${selected ? styles.selected : ''}`}>
@@ -49,11 +48,19 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps) {
       <div className={styles.accent} />
       <div className={styles.body}>
         <div className={styles.header}>
-          <span className={styles.icon}>{ICONS[nodeType]}</span>
+          <span className={styles.icon}>{ICONS[nodeType] ?? <Server size={13} />}</span>
           <span className={styles.label}>{label}</span>
           <span className={styles.status} />
         </div>
-        {sublabel && <div className={styles.sublabel}>{sublabel}</div>}
+        {configKeys.length > 0 && (
+          <div className={styles.configPreview}>
+            {configKeys.slice(0, 2).map((k) => (
+              <span key={k} className={styles.configChip}>
+                {k}: {String(config![k]).slice(0, 12)}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <Handle type="source" position={Position.Right} className={styles.handle} />
     </div>

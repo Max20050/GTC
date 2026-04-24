@@ -27,6 +27,14 @@
   flex-shrink: 0;
 }
 
+.dotError {
+  background: var(--accent-red);
+}
+
+.error {
+  color: var(--accent-red);
+}
+
 .center {
   font-size: var(--font-xs);
   color: var(--text-muted);

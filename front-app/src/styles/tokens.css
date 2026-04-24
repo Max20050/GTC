@@ -64,3 +64,78 @@ body {
   font-size: var(--font-base);
   -webkit-font-smoothing: antialiased;
 }
+
+/* ── React Flow overrides ── */
+
+/* Nuke the white default node background */
+.react-flow__node-default,
+.react-flow__node-input,
+.react-flow__node-output,
+.react-flow__node-group {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Controls panel */
+.react-flow__controls {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  fill: var(--text-secondary) !important;
+  color: var(--text-secondary) !important;
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--bg-card-hover) !important;
+  fill: var(--text-primary) !important;
+}
+
+/* MiniMap */
+.react-flow__minimap {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 6px !important;
+}
+
+/* Attribution badge */
+.react-flow__attribution {
+  display: none !important;
+}
+
+/* Selection box */
+.react-flow__selection {
+  background: rgba(74, 158, 255, 0.05) !important;
+  border: 1px solid var(--accent-blue) !important;
+}
+
+/* Edge labels */
+.react-flow__edge-text {
+  fill: var(--text-muted) !important;
+  font-size: 10px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.react-flow__edge-textbg {
+  fill: var(--bg-canvas) !important;
+}
+
+/* Edge selected highlight */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 2.5px !important;
+  opacity: 1 !important;
+}

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   DndContext,
   type DragEndEvent,
@@ -12,12 +13,16 @@ import { Canvas } from '../components/canvas/Canvas';
 import { Inspector } from '../components/inspector/Inspector';
 import { Statusbar } from '../components/statusbar/Statusbar';
 import { GenerateModal } from '../components/generate/GenerateModal';
+import { useCanvasSync } from '../hooks/useCanvasSync';
 import type { NodeType } from '../types/diagram';
 import styles from './BoardPage.module.css';
 
 export function BoardPage() {
+  const { boardId = 'default' } = useParams<{ boardId: string }>();
   const [zoom, setZoom] = useState(1);
   const [generateOpen, setGenerateOpen] = useState(false);
+
+  const { initialRFNodes, initialRFEdges, loading, syncError } = useCanvasSync(boardId);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
@@ -34,9 +39,8 @@ export function BoardPage() {
       | undefined;
 
     if (addNode && event.over?.id === 'canvas-drop-zone') {
-      const { clientX, clientY } = pointerEvent;
       const delta = event.delta;
-      addNode(nodeType, clientX + delta.x, clientY + delta.y);
+      addNode(nodeType, pointerEvent.clientX + delta.x, pointerEvent.clientY + delta.y);
     }
   }, []);
 
@@ -46,10 +50,22 @@ export function BoardPage() {
         <Topbar onGenerateDocs={() => setGenerateOpen(true)} />
         <div className={styles.main}>
           <ComponentPalette />
-          <Canvas onZoomChange={setZoom} />
+          {loading ? (
+            <div className={styles.loading}>
+              <span className={styles.loadingDot} />
+              Loading canvas…
+            </div>
+          ) : (
+            <Canvas
+              key={boardId}
+              onZoomChange={setZoom}
+              initialNodes={initialRFNodes}
+              initialEdges={initialRFEdges}
+            />
+          )}
           <Inspector />
         </div>
-        <Statusbar zoom={zoom} />
+        <Statusbar zoom={zoom} syncError={syncError} />
       </div>
       <GenerateModal open={generateOpen} onClose={() => setGenerateOpen(false)} />
     </DndContext>

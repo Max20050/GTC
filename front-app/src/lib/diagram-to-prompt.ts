@@ -1,4 +1,4 @@
-import type { DiagramState } from '../types/diagram';
+import type { DiagramNode, Connector } from '../types/diagram';
 
 export type DocFormat = 'CLAUDE.md' | 'README.md' | 'OpenAPI YAML' | 'Terraform' | 'Docker Compose';
 
@@ -13,7 +13,15 @@ export interface GenerateOptions {
   includeMermaid: boolean;
 }
 
-export function buildPrompt(diagram: DiagramState, options: GenerateOptions): string {
+interface DiagramSnapshot {
+  id: string;
+  name: string;
+  nodes: DiagramNode[];
+  connectors: Connector[];
+  viewport: { x: number; y: number; zoom: number };
+}
+
+export function buildPrompt(diagram: DiagramSnapshot, options: GenerateOptions): string {
   const scopedDiagram =
     options.scope === 'selected' && options.selectedNodeIds?.length
       ? {

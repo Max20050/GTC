@@ -4,7 +4,7 @@
 }
 
 .header {
-  padding: 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -79,4 +79,138 @@
 
 .select {
   cursor: pointer;
+}
+
+.textarea {
+  width: 100%;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 7px 8px;
+  font-size: var(--font-xs);
+  color: var(--text-code);
+  font-family: var(--font-mono);
+  outline: none;
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
+}
+
+.textarea:focus {
+  border-color: var(--border-active);
+}
+
+/* ── Config key-value editor ── */
+
+.configTable {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.configRow {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.configKey {
+  flex: 0 0 96px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  outline: none;
+  min-width: 0;
+}
+
+.configKey:focus {
+  border-color: var(--border-active);
+}
+
+.configVal {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  outline: none;
+  min-width: 0;
+}
+
+.configVal:focus {
+  border-color: var(--border-active);
+}
+
+.removeBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 3px;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.removeBtn:hover {
+  color: var(--accent-red);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.addBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 3px;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.addBtn:hover {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.hints {
+  margin-top: 8px;
+}
+
+.hintsLabel {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.hintChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.hintChip {
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  border: 1px dashed var(--border-default);
+  border-radius: 3px;
+  padding: 1px 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.hintChip:hover {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
 }
