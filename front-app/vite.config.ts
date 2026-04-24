@@ -10,11 +10,11 @@ export default defineConfig({
         target: 'http://localhost:8082',
         changeOrigin: true,
       },
-      // Workspace / app service (Go/GIN) — http://localhost:8080
+      // Workspace / app service (Go/GIN) — http://localhost:3002
       // /ws/orgs  → /orgs
       // /ws/boards → /boards
       '/ws': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:3002',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/ws/, ''),
       },
