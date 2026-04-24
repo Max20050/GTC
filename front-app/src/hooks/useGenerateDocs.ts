@@ -7,21 +7,15 @@ export function useGenerateDocs() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const diagram = useDiagram((s) => ({
-    id: s.id,
-    name: s.name,
-    nodes: s.nodes,
-    connectors: s.connectors,
-    regions: s.regions,
-    viewport: s.viewport,
-  }));
-
   async function generate(options: GenerateOptions) {
     setLoading(true);
     setError(null);
     setOutput('');
 
     try {
+      // Read diagram state at call time — no subscription needed
+      const { id, name, nodes, connectors, regions, viewport } = useDiagram.getState();
+      const diagram = { id, name, nodes, connectors, regions, viewport };
       const prompt = buildPrompt(diagram, options);
 
       const res = await fetch('/api/generate', {
