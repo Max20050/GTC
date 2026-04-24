@@ -2,7 +2,7 @@
 const BASE = '';
 
 function authHeaders() {
-  const token = localStorage.getItem('canvas_token') ?? '';
+  const token = localStorage.getItem('auth_token') ?? '';
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
