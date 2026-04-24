@@ -148,6 +148,18 @@ export const teamApi = {
 // ── Boards ───────────────────────────────────────────────────────────────────
 
 export const boardApi = {
+  listPersonal: () =>
+    request<PersonalBoard[]>('/boards'),
+
+  getBoard: (boardId: string) =>
+    request<PersonalBoard>(`/boards/${boardId}`),
+
   createPersonal: (input: CreateBoardInput) =>
     request<PersonalBoard>('/boards', { method: 'POST', body: JSON.stringify(input) }),
+
+  updateBoard: (boardId: string, data: Partial<CreateBoardInput>) =>
+    request<PersonalBoard>(`/boards/${boardId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  deleteBoard: (boardId: string) =>
+    request<void>(`/boards/${boardId}`, { method: 'DELETE' }),
 };

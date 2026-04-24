@@ -6,8 +6,7 @@ import {
 
 // ── Local persistence helpers ─────────────────────────────────────────────────
 
-const LS_BOARD_IDS = 'gtc_board_ids';
-const LS_ORG_IDS   = 'gtc_org_ids';
+const LS_ORG_IDS = 'gtc_org_ids';
 
 function loadIds(key: string): string[] {
   try { return JSON.parse(localStorage.getItem(key) ?? '[]') as string[]; }
@@ -26,7 +25,7 @@ interface WorkspaceStore {
   boards: Record<string, PersonalBoard>;
   boardsLoading: boolean;
   createBoard: (input: CreateBoardInput) => Promise<PersonalBoard>;
-  removeBoard: (id: string) => void;
+  removeBoard: (id: string) => Promise<void>;
 
   // Orgs
   orgIds: string[];
@@ -68,26 +67,24 @@ interface WorkspaceStore {
 // ── Store ─────────────────────────────────────────────────────────────────────
 
 export const useWorkspace = create<WorkspaceStore>((set, get) => ({
-  boardIds: loadIds(LS_BOARD_IDS),
+  boardIds: [],
   boards: {},
   boardsLoading: false,
 
   createBoard: async (input) => {
     const board = await boardApi.createPersonal(input);
-    set((s) => {
-      const ids = [board.id, ...s.boardIds.filter((id) => id !== board.id)];
-      saveIds(LS_BOARD_IDS, ids);
-      return { boardIds: ids, boards: { ...s.boards, [board.id]: board } };
-    });
+    set((s) => ({
+      boardIds: [board.id, ...s.boardIds.filter((id) => id !== board.id)],
+      boards: { ...s.boards, [board.id]: board },
+    }));
     return board;
   },
 
-  removeBoard: (id) => {
+  removeBoard: async (id) => {
+    await boardApi.deleteBoard(id);
     set((s) => {
-      const ids = s.boardIds.filter((i) => i !== id);
-      saveIds(LS_BOARD_IDS, ids);
       const { [id]: _removed, ...rest } = s.boards;
-      return { boardIds: ids, boards: rest };
+      return { boardIds: s.boardIds.filter((i) => i !== id), boards: rest };
     });
   },
 
@@ -274,6 +271,14 @@ export const useWorkspace = create<WorkspaceStore>((set, get) => ({
 
   init: async () => {
     const { orgIds, fetchOrg } = get();
-    await Promise.allSettled(orgIds.map(fetchOrg));
+    const [boards] = await Promise.allSettled([
+      boardApi.listPersonal(),
+      ...orgIds.map(fetchOrg),
+    ]);
+    if (boards.status === 'fulfilled') {
+      const boardMap: Record<string, PersonalBoard> = {};
+      for (const b of boards.value) boardMap[b.id] = b;
+      set({ boardIds: boards.value.map((b) => b.id), boards: boardMap });
+    }
   },
 }));
