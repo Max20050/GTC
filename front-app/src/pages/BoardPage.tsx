@@ -21,6 +21,7 @@ export function BoardPage() {
   const { boardId = 'default' } = useParams<{ boardId: string }>();
   const [zoom, setZoom] = useState(1);
   const [generateOpen, setGenerateOpen] = useState(false);
+  const [isDrawingZone, setIsDrawingZone] = useState(false);
 
   const { initialRFNodes, initialRFEdges, loading, syncError } = useCanvasSync(boardId);
 
@@ -47,7 +48,11 @@ export function BoardPage() {
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className={styles.app}>
-        <Topbar onGenerateDocs={() => setGenerateOpen(true)} />
+        <Topbar
+          onGenerateDocs={() => setGenerateOpen(true)}
+          isDrawingZone={isDrawingZone}
+          onToggleZoneMode={() => setIsDrawingZone((v) => !v)}
+        />
         <div className={styles.main}>
           <ComponentPalette />
           {loading ? (
@@ -61,6 +66,8 @@ export function BoardPage() {
               onZoomChange={setZoom}
               initialNodes={initialRFNodes}
               initialEdges={initialRFEdges}
+              isDrawingZone={isDrawingZone}
+              onZoneModeEnd={() => setIsDrawingZone(false)}
             />
           )}
           <Inspector />

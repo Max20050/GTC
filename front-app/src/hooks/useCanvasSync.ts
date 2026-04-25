@@ -50,6 +50,7 @@ function apiEdgeToRF(e: ApiEdge): Edge {
     id: e.id,
     source: e.from,
     target: e.to,
+    type: 'smoothstep',
     label: e.label ?? e.protocol,
     style: { stroke: color, strokeWidth: 1.5, opacity: 0.8 },
     markerEnd: { type: MarkerType.ArrowClosed, color },

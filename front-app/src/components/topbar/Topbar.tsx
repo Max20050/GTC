@@ -1,12 +1,14 @@
-import { History, Share2, Play, Rocket, Cpu } from 'lucide-react';
+import { History, Share2, Play, Rocket, Cpu, SquareDashed } from 'lucide-react';
 import { useDiagram } from '../../hooks/useDiagram';
 import styles from './Topbar.module.css';
 
 interface TopbarProps {
   onGenerateDocs: () => void;
+  isDrawingZone?: boolean;
+  onToggleZoneMode?: () => void;
 }
 
-export function Topbar({ onGenerateDocs }: TopbarProps) {
+export function Topbar({ onGenerateDocs, isDrawingZone = false, onToggleZoneMode }: TopbarProps) {
   const name = useDiagram((s) => s.name);
   const nodes = useDiagram((s) => s.nodes);
   const connectors = useDiagram((s) => s.connectors);
@@ -36,6 +38,13 @@ export function Topbar({ onGenerateDocs }: TopbarProps) {
       </div>
 
       <div className={styles.right}>
+        <button
+          className={isDrawingZone ? styles.btnActive : styles.btnSecondary}
+          onClick={onToggleZoneMode}
+          title="Draw a zone rectangle on the canvas"
+        >
+          <SquareDashed size={14} /> Zone
+        </button>
         <button className={styles.btnSecondary}>
           <History size={14} /> History
         </button>

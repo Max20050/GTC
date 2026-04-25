@@ -44,7 +44,7 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps) {
 
   return (
     <div className={`${styles.card} ${styles[category]} ${selected ? styles.selected : ''}`}>
-      <Handle type="target" position={Position.Left} className={styles.handle} />
+      <Handle type="target" id="input" position={Position.Left} className={styles.handle} />
       <div className={styles.accent} />
       <div className={styles.body}>
         <div className={styles.header}>
@@ -62,7 +62,7 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps) {
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Right} className={styles.handle} />
+      <Handle type="source" id="output" position={Position.Right} className={styles.handle} />
     </div>
   );
 });

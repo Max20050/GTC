@@ -108,3 +108,22 @@
 .btnPrimary:hover {
   opacity: 0.85;
 }
+
+.btnActive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: var(--font-sm);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  background: rgba(99, 179, 237, 0.15);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.btnActive:hover {
+  background: rgba(99, 179, 237, 0.25);
+}

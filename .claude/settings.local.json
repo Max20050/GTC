@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(mkdir -p \"/c/Users/maxim/OneDrive/Desktop/graph-to-code-project/canvas-service/cmd/server\")",
+      "Bash(mkdir -p \"/c/Users/maxim/OneDrive/Desktop/graph-to-code-project/canvas-service/internal/canvas\")",
+      "Bash(mkdir -p \"/c/Users/maxim/OneDrive/Desktop/graph-to-code-project/canvas-service/internal/node\")",
+      "Bash(mkdir -p \"/c/Users/maxim/OneDrive/Desktop/graph-to-code-project/canvas-service/internal/edge\")",
+      "Bash(mkdir -p \"/c/Users/maxim/OneDrive/Desktop/graph-to-code-project/canvas-service/internal/config\")",
+      "Bash(go mod *)",
+      "Bash(go get *)",
+      "Bash(go build *)",
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

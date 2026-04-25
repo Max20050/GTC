@@ -1,12 +1,11 @@
 package middleware
 
 import (
+	"canvas-service/pkg/response"
 	"context"
 	"crypto/rsa"
 	"net/http"
 	"strings"
-
-	"canvas-service/pkg/response"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -22,7 +21,7 @@ func Require(pubKey *rsa.PublicKey) func(http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			token, err := extractAndVerify(r, pubKey)
 			if err != nil {
-				response.Error(w, http.StatusUnauthorized, "unauthorized")
+				response.Error(w, http.StatusUnauthorized, err.Error())
 				return
 			}
 

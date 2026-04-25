@@ -3,6 +3,7 @@ import type { DiagramNode, Connector, Region, Selection } from '../types/diagram
 
 let nodeCounter = 0;
 let connectorCounter = 0;
+let zoneCounter = 0;
 
 interface DiagramStore {
   id: string;
@@ -34,6 +35,7 @@ interface DiagramStore {
 
   nextNodeId: () => string;
   nextConnectorId: () => string;
+  nextZoneId: () => string;
 }
 
 export const useDiagram = create<DiagramStore>((set) => ({
@@ -77,4 +79,5 @@ export const useDiagram = create<DiagramStore>((set) => ({
 
   nextNodeId: () => `node-${++nodeCounter}`,
   nextConnectorId: () => `conn-${++connectorCounter}`,
+  nextZoneId: () => `zone-${++zoneCounter}`,
 }));

@@ -19,6 +19,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useDroppable } from '@dnd-kit/core';
 import { NodeCard } from './NodeCard';
+import { ZoneLayer } from './ZoneLayer';
+import { DrawZoneOverlay } from './DrawZoneOverlay';
 import { useDiagram } from '../../hooks/useDiagram';
 import type { NodeType, Protocol } from '../../types/diagram';
 import styles from './Canvas.module.css';
@@ -39,9 +41,11 @@ interface CanvasProps {
   onZoomChange: (zoom: number) => void;
   initialNodes?: Node[];
   initialEdges?: Edge[];
+  isDrawingZone?: boolean;
+  onZoneModeEnd?: () => void;
 }
 
-export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [] }: CanvasProps) {
+export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [], isDrawingZone = false, onZoneModeEnd }: CanvasProps) {
   const addNode      = useDiagram((s) => s.addNode);
   const updateNode   = useDiagram((s) => s.updateNode);
   const removeNode   = useDiagram((s) => s.removeNode);
@@ -65,6 +69,7 @@ export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [] }: C
       const newEdge: Edge = {
         ...connection,
         id: nextConnectorId(),
+        type: 'smoothstep',
         style: { stroke: color, strokeWidth: 1.5, opacity: 0.8 },
         markerEnd: { type: MarkerType.ArrowClosed, color },
         label: 'HTTP REST',
@@ -173,6 +178,7 @@ export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [] }: C
           nodeTypes={NODE_TYPES}
           fitView
           deleteKeyCode="Delete"
+          panOnDrag={!isDrawingZone}
           style={{ background: 'var(--bg-canvas)' }}
         >
           <Background
@@ -188,6 +194,8 @@ export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [] }: C
           />
           <Controls />
           <ConnectorLegend />
+          <ZoneLayer />
+          <DrawZoneOverlay active={isDrawingZone} onDone={() => onZoneModeEnd?.()} />
         </ReactFlow>
       </div>
     </div>
