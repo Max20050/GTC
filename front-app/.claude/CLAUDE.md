@@ -1,66 +1,93 @@
-## CLAUDE.md File for the front-app folder of the GTC project
+# CLAUDE.md
 
-1. This folder is 1 of the 4 services that this project has.
-2. So knowing this you should commit to the main repository which is the parent folder of the root folder in this service.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-### Github commit guidelines:
-1. **Stage all changes:**
-   ```bash
-   git add -A
-   ```
+## Project Overview
 
-2. **Commit with a descriptive message:**
-   ```bash
-   git commit -m "<type>: <short description of what changed>"
-   ```
-   Use conventional commit prefixes:
-   - `feat:` — new feature or file added
-   - `fix:` — bug fix
-   - `refactor:` — code restructure without behavior change
-   - `docs:` — documentation change
-   - `chore:` — config, tooling, or dependency changes
-   - `style:` — formatting, linting
+Graph-to-Code (GTC) is an architecture diagramming tool. The frontend is a React + TypeScript SPA built with Vite. It lets users build architecture diagrams on a canvas, then generates code/docs from them. There are 4 backend services: `users-auth` (auth, port 8080), `canvas-service` (canvas storage, port 8082), `app-service`, and `build-agent`. All are Go services. The frontend proxies API calls through Vite's dev server.
 
-3. **Push to origin:**
-   ```bash
-   git pull --rebase origin master
-   git push origin master
-   ```
+## Commands
 
-## What this service does:
-This service is the frontend for the Graph-to-Code project. It is built with React and TypeScript.
+```bash
+npm run dev       # start dev server (proxies /canvas/* → localhost:8082, auth → localhost:8080)
+npm run build     # tsc type-check + vite production build
+npm run lint      # eslint
+```
 
-The Pages structure is the following:
+No test runner is configured yet.
 
-1. Auth pages — outside any layout:
+## Git Workflow
 
-    /login
+Always commit to the parent repo root (not inside `front-app/`). Stage and commit from `graph-to-code-project/`:
 
-    /register
-    
-    /oauth
+```bash
+git add -A
+git commit -m "<type>: <description>"   # feat|fix|refactor|docs|chore|style
+git pull --rebase origin master
+git push origin master
+```
 
-    /callback
+## Architecture
 
-Personal workspace — simple top nav, no sidebar
-/home                        → all your personal boards + orgs you belong to.
+### State management
 
-/boards/:boardId             → the canvas itself (fullscreen, minimal chrome)
+All diagram state lives in a single Zustand store (`src/hooks/useDiagram.ts`). The store holds `nodes`, `connectors`, `regions`, `viewport`, and `selection`. It is the source of truth for the inspector and is mirrored to React Flow's internal state.
 
-Organization workspace — sidebar with org context
-/org/:orgSlug                          → org overview, recent boards, members summary.
-/org/:orgSlug/teams                    → all teams in the org
-/org/:orgSlug/teams/:teamSlug          → team page with its boards and members
-/org/:orgSlug/teams/:teamSlug/boards/:boardId  → canvas (same component as personal)
-/org/:orgSlug/members                  → org member management
-/org/:orgSlug/settings                 → org settings, plan, billing
+**Critical:** The canvas has two parallel state systems that must stay in sync:
+1. **Zustand store** — the app's source of truth. Used by the inspector, auto-save, and generate features.
+2. **React Flow state** (`useNodesState`/`useEdgesState` inside `Canvas.tsx`) — drives what is rendered on the canvas.
 
-The canvas /boards/:boardId or the org version — fullscreen, same component either way. The URL tells it the context, the UI adapts. No sidebar, just a floating toolbar.
+Changes originating in React Flow (drag, connect, delete) flow: RF event → `handleNodesChange`/`handleEdgesChange`/`onConnect` → update both RF state and Zustand store. Changes loaded from the backend flow: `useCanvasSync` → sets Zustand store → passes as `initialNodes`/`initialEdges` to `<Canvas>` on mount. The Canvas only reads `initialNodes`/`initialEdges` once at mount; it does not re-initialise if those props change.
 
-Why this structure:
+### Canvas persistence
 
-/home is the single landing spot after login — no confusion about where to go
-The canvas is always fullscreen regardless of ownership — personal or team board, same experience
-Org slug in the URL makes sharing links intuitive (/org/acme/teams/backend)
-Settings are scoped to the org, not buried in a global settings page
+`src/hooks/useCanvasSync.ts` handles load and auto-save:
+- On mount: `GET /canvas/{canvasId}` → populate Zustand + RF initial state. Creates a new canvas on 404.
+- On change: Zustand subscription debounces 1500ms → `PUT /canvas/{canvasId}` (full replace, no diff).
+- Auth: `Bearer` token read from `localStorage` key `auth_token`.
 
+The canvas ID comes from the URL param `boardId`. An embedded canvas can use a composite ID like `{boardId}:{nodeId}` — `useCanvasSync` handles creation automatically.
+
+### Canvas API contract
+
+`src/lib/canvas-api.ts` — base URL is empty string (Vite proxy). The backend uses `from`/`to` for edge source/target; the frontend uses `sourceNodeId`/`targetNodeId`. Transformation happens in `useCanvasSync`.
+
+Node `config` is `Record<string, unknown>`. All extended data (contracts, endpoints, embedded-canvas flags) should be stored as reserved underscore-prefixed keys (`_contracts`, `_endpoints`, `_hasEmbedded`) in config to avoid backend schema changes.
+
+### React Flow integration
+
+- Library: `@xyflow/react` v12.
+- Custom node type `arch` maps to `NodeCard`. All nodes use this single type.
+- Node handles use explicit IDs: `id="input"` (target, left) and `id="output"` (source, right). These IDs are required — without them `addEdge` deduplicates valid connections.
+- All edges use `type: "smoothstep"`.
+- `ZoneLayer` and `DrawZoneOverlay` are rendered as children of `<ReactFlow>` and use `useViewport()`/`useReactFlow()` which require being inside the ReactFlow provider context.
+- Zones (regions) are rendered via `ZoneLayer` using viewport-transform math: `screenX = flowX * zoom + vpX`. They are NOT React Flow nodes.
+
+### Inspector
+
+`src/components/inspector/Inspector.tsx` reads `selection` from Zustand and renders either `NodeDetail` or `ConnectorDetail`. The `Section` helper component is exported from `NodeDetail` and reused in `ConnectorDetail`.
+
+`NodeDetail` has a config key-value editor. For `aws-service` and `google-service` nodes, `service_name` and `region` fields render as `<select>` dropdowns with curated options. Service-specific field suggestions appear when a service name is selected (e.g., selecting "Lambda" shows runtime/memory/timeout hints).
+
+### Drag-and-drop
+
+Component palette items are draggable via `@dnd-kit/core`. The canvas is the drop target (`id="canvas-drop-zone"`). Drop position is communicated via `window.__canvasAddNode(type, clientX, clientY)` — a function the Canvas registers on `window` because `DndContext` wraps the whole page and the Canvas can't receive props directly from the drag handler.
+
+### Zone drawing mode
+
+Toggled by the "Zone" button in Topbar. State lives in `BoardPage` (`isDrawingZone`). When active, `panOnDrag={false}` is set on ReactFlow and `DrawZoneOverlay` (rendered inside ReactFlow) captures pointer events. Zones are in-memory only — not yet persisted to the backend.
+
+### Route structure
+
+```
+/login, /register          — auth pages, no layout
+/home                      — personal boards list
+/boards/:boardId           — canvas (BoardPage)
+/org/:orgId                — org overview (OrgPage, stub)
+```
+
+`ProtectedRoute` checks `localStorage` for `auth_token` and redirects to `/login` if absent.
+
+## Open Issues
+
+See GitHub issue #1 for the next major feature set: embedded canvas, data contracts (`_contracts`), and endpoint definitions (`_endpoints`) with a connection contract inspector.

@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Read(//c/Users/maxim/OneDrive/Desktop/graph-to-code-project/**)",
+      "Bash(gh repo *)",
+      "Bash(gh issue *)"
     ]
   }
 }
