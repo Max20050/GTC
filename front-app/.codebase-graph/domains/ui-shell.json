@@ -1,0 +1,29 @@
+{
+  "name": "ui-shell",
+  "summary": "Page layout and chrome: BoardPage assembles the full editor layout (palette + canvas + inspector + topbar + statusbar), wraps everything in DndContext, and owns zone-drawing toggle and generate modal state.",
+  "files": {
+    "board_page": "src/pages/BoardPage.tsx",
+    "home_page": "src/pages/HomePage.tsx",
+    "topbar": "src/components/topbar/Topbar.tsx",
+    "statusbar": "src/components/statusbar/Statusbar.tsx",
+    "palette": "src/components/sidebar/ComponentPalette.tsx",
+    "palette_item": "src/components/sidebar/PaletteItem.tsx",
+    "modal": "src/components/workspace/Modal.tsx",
+    "members_panel": "src/components/workspace/MembersPanel.tsx",
+    "teams_panel": "src/components/workspace/TeamsPanel.tsx",
+    "styles_tokens": "src/styles/tokens.css"
+  },
+  "exposes": [
+    "BoardPage() — main editor page at /boards/:boardId",
+    "HomePage() — personal boards list at /home"
+  ],
+  "depends_on": ["canvas", "diagram-state", "inspector", "generate", "workspace", "@dnd-kit/core"],
+  "key_notes": [
+    "DndContext wraps the entire BoardPage. Canvas registers window.__canvasAddNode because it can't receive props from DndContext handlers directly.",
+    "Canvas is keyed by boardId: <Canvas key={boardId} ...> — forces full remount (and RF state reset) when navigating boards.",
+    "isDrawingZone state lives in BoardPage and is passed down; Topbar has a Zone button that toggles it.",
+    "GenerateModal is rendered at BoardPage level, opened via Topbar 'Generate Docs' button.",
+    "Statusbar shows zoom level from React Flow onMoveEnd and syncError from useCanvasSync."
+  ],
+  "updated_at": "2026-04-26T00:00:00Z"
+}

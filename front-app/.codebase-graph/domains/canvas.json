@@ -1,0 +1,31 @@
+{
+  "name": "canvas",
+  "summary": "Owns the React Flow rendering surface, persistence sync, drag-drop drop target, zone drawing, and the NodeCard custom node. useCanvasSync handles load/auto-save; Canvas.tsx owns RF state and bridges it to Zustand.",
+  "files": {
+    "sync_hook": "src/hooks/useCanvasSync.ts",
+    "api_client": "src/lib/canvas-api.ts",
+    "canvas_component": "src/components/canvas/Canvas.tsx",
+    "node_card": "src/components/canvas/NodeCard.tsx",
+    "zone_layer": "src/components/canvas/ZoneLayer.tsx",
+    "draw_zone_overlay": "src/components/canvas/DrawZoneOverlay.tsx"
+  },
+  "exposes": [
+    "useCanvasSync(canvasId) → { initialRFNodes, initialRFEdges, loading, syncError, forceManualSave }",
+    "Canvas({ onZoomChange, initialNodes, initialEdges, isDrawingZone, onZoneModeEnd })",
+    "fetchCanvas(canvasId)", "createCanvas(canvasId)", "saveCanvas(doc)"
+  ],
+  "depends_on": ["diagram-state (useDiagram)", "@xyflow/react", "@dnd-kit/core", "canvas-service (/canvas/*)"],
+  "key_notes": [
+    "Canvas reads initialNodes/initialEdges ONCE at mount via useNodesState(initialNodes) — prop changes after mount are ignored. Use key={boardId} on Canvas to force remount when board changes.",
+    "RF changes (drag, connect, delete) → handleNodesChange/handleEdgesChange → update both RF state AND Zustand.",
+    "Auto-save: Zustand subscription debounced 1500ms → PUT /canvas/{canvasId} (full replace).",
+    "On 404, createCanvas() posts a blank canvas — supports new boards automatically.",
+    "Zones (regions) are in-memory only — not persisted to backend yet.",
+    "window.__canvasAddNode(type, clientX, clientY) registered in Canvas.tsx useEffect — BoardPage calls it from DndContext onDragEnd.",
+    "ZoneLayer uses viewport math: screenX = flowX * zoom + vpX. Must live inside <ReactFlow>.",
+    "DrawZoneOverlay captures pointer events when isDrawingZone=true; panOnDrag=false set on ReactFlow during this mode.",
+    "Edge field mapping: backend from/to ↔ store sourceNodeId/targetNodeId — transformed in apiEdgeToStore/storeConnectorToApi.",
+    "Embedded canvas: canvasId can be composite '{boardId}:{nodeId}' — useCanvasSync handles creation."
+  ],
+  "updated_at": "2026-04-26T00:00:00Z"
+}

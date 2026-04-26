@@ -1,0 +1,29 @@
+{
+  "summary": "Graph-to-Code (GTC) is a React/TypeScript SPA (Vite) for building architecture diagrams on a canvas, then generating code/docs from them via Claude. State has two parallel systems: Zustand (source of truth) + React Flow internal state — both must stay in sync. Backends: users-auth (port 8080), canvas-service (port 8082), app-service, build-agent (all Go), proxied by Vite.",
+  "entry_points": ["src/main.tsx", "src/App.tsx", "index.html"],
+  "domains": ["auth", "canvas", "diagram-state", "inspector", "generate", "workspace", "ui-shell"],
+  "tech_stack": {
+    "language": "TypeScript",
+    "framework": "React 19 + Vite",
+    "state": "Zustand v5",
+    "canvas_lib": "@xyflow/react v12",
+    "dnd": "@dnd-kit/core",
+    "ai": "@anthropic-ai/sdk (generate docs via /api/generate)",
+    "syntax_highlight": "shiki",
+    "routing": "react-router-dom v7",
+    "external_services": ["canvas-service (port 8082)", "users-auth (port 8080)", "app-service", "build-agent"]
+  },
+  "key_conventions": [
+    "All diagram state lives in src/hooks/useDiagram.ts (Zustand). Never hold node/edge truth outside it.",
+    "Canvas RF state (useNodesState/useEdgesState) mirrors Zustand but is initialized once from initialNodes/initialEdges props at mount — it does NOT re-init if props change.",
+    "canvas-api uses from/to for edges; the store uses sourceNodeId/targetNodeId — transformation happens in useCanvasSync.",
+    "Extended node data (contracts, endpoints, embedded-canvas) stored in config under underscore-prefixed keys (_contracts, _endpoints, _hasEmbedded).",
+    "All edges use type: 'smoothstep'. Custom node type 'arch' maps to NodeCard.",
+    "Node handles have explicit IDs: id='input' (target, left) and id='output' (source, right).",
+    "ZoneLayer and DrawZoneOverlay must be children of <ReactFlow> to use useViewport()/useReactFlow().",
+    "Drag-drop uses window.__canvasAddNode(type, clientX, clientY) because DndContext wraps the page.",
+    "Auth token stored in localStorage key 'auth_token'. Canvas API reads it via authHeaders().",
+    "Vite proxies: /canvas/* → :8082, /auth-api/* → :8080, /ws → :8080, /api/generate → app-service."
+  ],
+  "updated_at": "2026-04-26T00:00:00Z"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "workspace",
+  "summary": "Manages personal boards, orgs, teams, and members via workspace-api.ts (proxied to users-auth at /ws). State held in useWorkspace Zustand store. Org IDs persisted to localStorage for cross-session recall.",
+  "files": {
+    "api_client": "src/lib/workspace-api.ts",
+    "store": "src/hooks/useWorkspaceStore.ts",
+    "home_page": "src/pages/HomePage.tsx",
+    "org_page": "src/pages/OrgPage.tsx"
+  },
+  "exposes": [
+    "boardApi.listPersonal/getBoard/createPersonal/updateBoard/deleteBoard",
+    "orgApi.create/get/update/delete/listMembers/inviteMember/updateMemberRole/removeMember",
+    "teamApi.list/create/get/update/delete/listMembers/addMember/updateMemberRole/removeMember",
+    "useWorkspace() → { boards, boardIds, orgs, orgIds, teams, members, ... all async actions }"
+  ],
+  "depends_on": ["users-auth service (/ws)", "localStorage (org IDs)"],
+  "key_notes": [
+    "useWorkspace.init() fetches personal boards + all cached org details in parallel at app start.",
+    "Org IDs are saved to localStorage key 'gtc_org_ids' so known orgs survive page reload.",
+    "Team member key in store is '{orgId}:{teamId}' — composite key, not a nested object.",
+    "OrgPage is a stub — workspace features are partially implemented.",
+    "workspace-api base is '/ws' (proxied to :8080), distinct from auth-api base '/auth-api/v1/auth'."
+  ],
+  "updated_at": "2026-04-26T00:00:00Z"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "diagram-state",
+  "summary": "Zustand store (useDiagram) is the single source of truth for all diagram data — nodes, connectors, regions, viewport, selection, name. Types defined in src/types/diagram.ts.",
+  "files": {
+    "store": "src/hooks/useDiagram.ts",
+    "types": "src/types/diagram.ts"
+  },
+  "exposes": [
+    "useDiagram() → { nodes, connectors, regions, viewport, selection, id, name, lastSaved }",
+    "setNodes, addNode, updateNode, removeNode",
+    "setConnectors, addConnector, updateConnector, removeConnector",
+    "addRegion, removeRegion",
+    "setViewport, setSelection, setName, markSaved",
+    "nextNodeId(), nextConnectorId(), nextZoneId()"
+  ],
+  "depends_on": ["zustand", "src/types/diagram.ts"],
+  "key_notes": [
+    "removeNode also cascades to remove all connectors attached to that node and clears selection if it pointed to it.",
+    "ID counters (nodeCounter, connectorCounter, zoneCounter) are module-level — they reset on page reload but IDs within a session are monotonically increasing.",
+    "NodeType values: microservice, database, queue, cache, aws-service, google-service, ai-model-provider, serverless.",
+    "Protocol values: http-rest, tcp, message-queue, database, websocket, streaming.",
+    "config: Record<string, unknown> — reserved underscore-prefixed keys for extended data: _contracts, _endpoints, _hasEmbedded."
+  ],
+  "updated_at": "2026-04-26T00:00:00Z"
+}

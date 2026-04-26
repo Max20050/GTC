@@ -1,0 +1,24 @@
+{
+  "name": "inspector",
+  "summary": "Right-panel inspector reads selection from Zustand and renders NodeDetail or ConnectorDetail. NodeDetail supports a live config key-value editor with cloud-service dropdowns and field hints.",
+  "files": {
+    "container": "src/components/inspector/Inspector.tsx",
+    "node_detail": "src/components/inspector/NodeDetail.tsx",
+    "connector_detail": "src/components/inspector/ConnectorDetail.tsx",
+    "styles": "src/components/inspector/Detail.module.css"
+  },
+  "exposes": [
+    "Inspector() — renders based on useDiagram selection",
+    "NodeDetail({ node })",
+    "ConnectorDetail({ connector })",
+    "Section({ label, children }) — exported from NodeDetail, reused in ConnectorDetail"
+  ],
+  "depends_on": ["diagram-state (useDiagram)"],
+  "key_notes": [
+    "aws-service and google-service nodes render service_name and region fields as <select> dropdowns (not plain inputs).",
+    "Config values are auto-coerced: 'true'/'false' → boolean, numeric strings → number.",
+    "Service-specific field hints appear after selecting a service_name (e.g. Lambda → runtime/memory/timeout chips).",
+    "Hint chips appear for all unreferenced keys in CONFIG_HINTS and AWS_SERVICE_HINTS/GOOGLE_SERVICE_HINTS."
+  ],
+  "updated_at": "2026-04-26T00:00:00Z"
+}

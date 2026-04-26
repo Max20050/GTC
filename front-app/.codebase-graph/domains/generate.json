@@ -1,0 +1,24 @@
+{
+  "name": "generate",
+  "summary": "Converts the Zustand diagram snapshot into a prompt and sends it to /api/generate (app-service) to produce CLAUDE.md, README.md, OpenAPI YAML, Terraform, or Docker Compose output. Uses shiki for syntax highlighting in preview.",
+  "files": {
+    "hook": "src/hooks/useGenerateDocs.ts",
+    "prompt_builder": "src/lib/diagram-to-prompt.ts",
+    "modal": "src/components/generate/GenerateModal.tsx",
+    "preview": "src/components/generate/DocPreview.tsx"
+  },
+  "exposes": [
+    "useGenerateDocs() → { output, loading, error, generate(options) }",
+    "buildPrompt(diagram, options): string",
+    "GenerateModal({ open, onClose })",
+    "DocPreview({ content, format })"
+  ],
+  "depends_on": ["diagram-state (useDiagram)", "app-service (/api/generate)", "@anthropic-ai/sdk (declared dep, actual call is server-side)"],
+  "key_notes": [
+    "generate() reads Zustand state imperatively at call time (useDiagram.getState()) — not subscribed.",
+    "Supported formats: 'CLAUDE.md' | 'README.md' | 'OpenAPI YAML' | 'Terraform' | 'Docker Compose'.",
+    "Scope can be 'full' or 'selected' — selected filters nodes+connectors to selectedNodeIds.",
+    "The actual AI call goes to /api/generate (Vite-proxied to app-service), not directly to Anthropic from the browser."
+  ],
+  "updated_at": "2026-04-26T00:00:00Z"
+}
