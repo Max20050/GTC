@@ -1,10 +1,6 @@
 import { create } from 'zustand';
 import type { DiagramNode, Connector, Region, Selection } from '../types/diagram';
 
-let nodeCounter = 0;
-let connectorCounter = 0;
-let zoneCounter = 0;
-
 interface DiagramStore {
   id: string;
   name: string;
@@ -49,7 +45,12 @@ export const useDiagram = create<DiagramStore>((set) => ({
   lastSaved: null,
 
   setNodes: (nodes) => set({ nodes }),
-  addNode: (node) => set((s) => ({ nodes: [...s.nodes, node] })),
+  addNode: (node) =>
+    set((s) => ({
+      nodes: s.nodes.some((n) => n.id === node.id)
+        ? s.nodes.map((n) => (n.id === node.id ? node : n))
+        : [...s.nodes, node],
+    })),
   updateNode: (id, patch) =>
     set((s) => ({ nodes: s.nodes.map((n) => (n.id === id ? { ...n, ...patch } : n)) })),
   removeNode: (id) =>
@@ -60,7 +61,12 @@ export const useDiagram = create<DiagramStore>((set) => ({
     })),
 
   setConnectors: (connectors) => set({ connectors }),
-  addConnector: (connector) => set((s) => ({ connectors: [...s.connectors, connector] })),
+  addConnector: (connector) =>
+    set((s) => ({
+      connectors: s.connectors.some((c) => c.id === connector.id)
+        ? s.connectors.map((c) => (c.id === connector.id ? connector : c))
+        : [...s.connectors, connector],
+    })),
   updateConnector: (id, patch) =>
     set((s) => ({ connectors: s.connectors.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
   removeConnector: (id) =>
@@ -77,7 +83,7 @@ export const useDiagram = create<DiagramStore>((set) => ({
   setName: (name) => set({ name }),
   markSaved: () => set({ lastSaved: new Date() }),
 
-  nextNodeId: () => `node-${++nodeCounter}`,
-  nextConnectorId: () => `conn-${++connectorCounter}`,
-  nextZoneId: () => `zone-${++zoneCounter}`,
+  nextNodeId: () => crypto.randomUUID(),
+  nextConnectorId: () => crypto.randomUUID(),
+  nextZoneId: () => crypto.randomUUID(),
 }));

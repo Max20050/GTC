@@ -4,7 +4,10 @@
       "Bash(npm run *)",
       "Read(//c/Users/maxim/OneDrive/Desktop/graph-to-code-project/**)",
       "Bash(gh repo *)",
-      "Bash(gh issue *)"
+      "Bash(gh issue *)",
+      "Bash(rm *)",
+      "Bash(npm install *)",
+      "Bash(npm test *)"
     ]
   }
 }
