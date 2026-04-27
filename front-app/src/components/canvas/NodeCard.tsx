@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import {
   Server, Database, MessageSquare, Zap,
-  Cloud, Globe, Brain, Code2,
+  Cloud, Globe, Brain, Code2, Layers,
 } from 'lucide-react';
 import type { NodeType } from '../../types/diagram';
 import styles from './NodeCard.module.css';
@@ -40,7 +40,10 @@ interface NodeData {
 export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps) {
   const { label, nodeType, config } = data as unknown as NodeData;
   const category = CATEGORY[nodeType] ?? 'compute';
-  const configKeys = config ? Object.keys(config) : [];
+  const hasEmbedded = Boolean(config?._hasEmbedded);
+  const visibleKeys = config
+    ? Object.keys(config).filter((k) => !k.startsWith('_')).slice(0, 2)
+    : [];
 
   return (
     <div className={`${styles.card} ${styles[category]} ${selected ? styles.selected : ''}`}>
@@ -50,11 +53,16 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps) {
         <div className={styles.header}>
           <span className={styles.icon}>{ICONS[nodeType] ?? <Server size={13} />}</span>
           <span className={styles.label}>{label}</span>
+          {hasEmbedded && (
+            <span className={styles.embeddedIcon} title="Embedded canvas">
+              <Layers size={11} />
+            </span>
+          )}
           <span className={styles.status} />
         </div>
-        {configKeys.length > 0 && (
+        {visibleKeys.length > 0 && (
           <div className={styles.configPreview}>
-            {configKeys.slice(0, 2).map((k) => (
+            {visibleKeys.map((k) => (
               <span key={k} className={styles.configChip}>
                 {k}: {String(config![k]).slice(0, 12)}
               </span>

@@ -214,3 +214,257 @@
   color: var(--accent-blue);
   border-color: var(--accent-blue);
 }
+
+/* ── ContractsEditor ── */
+
+.contractsEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.emptyHint {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin: 0;
+}
+
+.contractBlock {
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contractHeader {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.contractNameInput {
+  flex: 1;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: var(--font-sm);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  font-weight: 600;
+  outline: none;
+}
+
+.contractNameInput:focus {
+  border-color: var(--border-active);
+}
+
+.fieldList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldRow {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.fieldName {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 5px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  outline: none;
+  min-width: 0;
+}
+
+.fieldName:focus {
+  border-color: var(--border-active);
+}
+
+.fieldType {
+  flex: 1;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 5px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--accent-blue);
+  outline: none;
+  min-width: 0;
+}
+
+.fieldType:focus {
+  border-color: var(--border-active);
+}
+
+.addFieldBtn,
+.addStructBtn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border-default);
+  border-radius: 3px;
+  padding: 2px 7px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.addFieldBtn:hover,
+.addStructBtn:hover {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+/* ── EndpointsEditor ── */
+
+.endpointsEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.endpointRow {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.methodSelect {
+  flex: 0 0 72px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 4px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--accent-teal, #00d4aa);
+  outline: none;
+  cursor: pointer;
+}
+
+.pathInput {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 5px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  outline: none;
+  min-width: 0;
+}
+
+.pathInput:focus {
+  border-color: var(--border-active);
+}
+
+.schemaSelect {
+  flex: 1;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 4px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  outline: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.addEndpointBtn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border-default);
+  border-radius: 3px;
+  padding: 2px 7px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.addEndpointBtn:hover {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+/* ── Contract preview (connector inspector) ── */
+
+.contractPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contractPreviewBlock {
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+
+.contractPreviewTitle {
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.contractPreviewName {
+  font-size: var(--font-sm);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.contractPreviewField {
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  padding: 1px 0;
+}
+
+.contractPreviewField span {
+  color: var(--accent-blue);
+}
+
+.goToNodeBtn {
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--accent-blue);
+  background: transparent;
+  border: 1px solid var(--accent-blue);
+  border-radius: 3px;
+  padding: 3px 8px;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.goToNodeBtn:hover {
+  background: rgba(0, 180, 255, 0.08);
+}

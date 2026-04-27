@@ -43,9 +43,10 @@ interface CanvasProps {
   initialEdges?: Edge[];
   isDrawingZone?: boolean;
   onZoneModeEnd?: () => void;
+  onNodeDoubleClick?: (nodeId: string, label: string) => void;
 }
 
-export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [], isDrawingZone = false, onZoneModeEnd }: CanvasProps) {
+export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [], isDrawingZone = false, onZoneModeEnd, onNodeDoubleClick }: CanvasProps) {
   const addNode      = useDiagram((s) => s.addNode);
   const updateNode   = useDiagram((s) => s.updateNode);
   const removeNode   = useDiagram((s) => s.removeNode);
@@ -175,6 +176,10 @@ export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [], isD
           onEdgesChange={handleEdgesChange}
           onConnect={onConnect}
           onMoveEnd={handleMoveEnd}
+          onNodeDoubleClick={(_, node) => {
+            const label = String((node.data as { label?: string }).label ?? '');
+            onNodeDoubleClick?.(node.id, label);
+          }}
           nodeTypes={NODE_TYPES}
           fitView
           deleteKeyCode="Delete"

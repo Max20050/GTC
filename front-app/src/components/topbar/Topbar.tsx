@@ -1,4 +1,4 @@
-import { History, Share2, Play, Rocket, Cpu, SquareDashed } from 'lucide-react';
+import { History, Share2, Play, Rocket, Cpu, SquareDashed, ChevronRight } from 'lucide-react';
 import { useDiagram } from '../../hooks/useDiagram';
 import styles from './Topbar.module.css';
 
@@ -6,9 +6,12 @@ interface TopbarProps {
   onGenerateDocs: () => void;
   isDrawingZone?: boolean;
   onToggleZoneMode?: () => void;
+  parentBoardId?: string;
+  embeddedNodeLabel?: string;
+  onNavigateUp?: () => void;
 }
 
-export function Topbar({ onGenerateDocs, isDrawingZone = false, onToggleZoneMode }: TopbarProps) {
+export function Topbar({ onGenerateDocs, isDrawingZone = false, onToggleZoneMode, parentBoardId, embeddedNodeLabel, onNavigateUp }: TopbarProps) {
   const name = useDiagram((s) => s.name);
   const nodes = useDiagram((s) => s.nodes);
   const connectors = useDiagram((s) => s.connectors);
@@ -22,12 +25,22 @@ export function Topbar({ onGenerateDocs, isDrawingZone = false, onToggleZoneMode
         <span className={styles.breadcrumb}>
           <span className={styles.muted}>workspace</span>
           <span className={styles.sep}>/</span>
-          <input
-            className={styles.nameInput}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            spellCheck={false}
-          />
+          {parentBoardId ? (
+            <>
+              <button className={styles.breadcrumbLink} onClick={onNavigateUp}>
+                {name}
+              </button>
+              <ChevronRight size={12} className={styles.sepIcon} />
+              <span className={styles.muted}>{embeddedNodeLabel ?? 'embedded'}</span>
+            </>
+          ) : (
+            <input
+              className={styles.nameInput}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              spellCheck={false}
+            />
+          )}
         </span>
       </div>
 

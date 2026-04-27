@@ -98,3 +98,11 @@
   background: var(--accent-blue) !important;
   transform: scale(1.3);
 }
+
+.embeddedIcon {
+  display: flex;
+  align-items: center;
+  color: var(--accent-blue);
+  flex-shrink: 0;
+  opacity: 0.8;
+}

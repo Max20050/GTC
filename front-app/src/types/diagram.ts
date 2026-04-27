@@ -45,3 +45,22 @@ export interface Selection {
   type: SelectionType;
   id: string | null;
 }
+
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+export interface ContractField {
+  name: string;
+  type: string;
+}
+
+export interface Contract {
+  name: string;
+  fields: ContractField[];
+}
+
+export interface Endpoint {
+  method: HttpMethod;
+  path: string;
+  requestSchema?: string;
+  responseSchema?: string;
+}

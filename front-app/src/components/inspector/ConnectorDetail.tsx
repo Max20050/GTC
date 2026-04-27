@@ -1,5 +1,5 @@
 import { useDiagram } from '../../hooks/useDiagram';
-import type { Connector, DiagramNode, Protocol } from '../../types/diagram';
+import type { Connector, DiagramNode, Protocol, Endpoint, Contract } from '../../types/diagram';
 import { Section } from './NodeDetail';
 import styles from './Detail.module.css';
 
@@ -88,6 +88,85 @@ export function ConnectorDetail({ connector, nodes }: ConnectorDetailProps) {
           />
         </Section>
       )}
+
+      {tgt && <EndpointPicker connector={connector} tgt={tgt} onConfig={setConfig} />}
+    </div>
+  );
+}
+
+function EndpointPicker({
+  connector,
+  tgt,
+  onConfig,
+}: {
+  connector: Connector;
+  tgt: DiagramNode;
+  onConfig: (patch: Record<string, unknown>) => void;
+}) {
+  const endpoints = (tgt.config._endpoints as Endpoint[] | undefined) ?? [];
+  const contracts = (tgt.config._contracts as Contract[] | undefined) ?? [];
+  if (endpoints.length === 0) return null;
+
+  const selectedIdx =
+    typeof connector.config._selectedEndpoint === 'number'
+      ? (connector.config._selectedEndpoint as number)
+      : -1;
+  const selected = selectedIdx >= 0 ? endpoints[selectedIdx] : null;
+
+  function handleSelect(val: string) {
+    const idx = val === '' ? -1 : Number(val);
+    const ep = idx >= 0 ? endpoints[idx] : null;
+    onConfig({
+      _selectedEndpoint: idx >= 0 ? idx : undefined,
+      ...(ep ? { label: `${ep.method} ${ep.path}` } : {}),
+    });
+  }
+
+  function findContract(name?: string): Contract | undefined {
+    return name ? contracts.find((c) => c.name === name) : undefined;
+  }
+
+  const reqContract = findContract(selected?.requestSchema);
+  const resContract = findContract(selected?.responseSchema);
+
+  return (
+    <>
+      <Section label="ENDPOINT">
+        <select
+          className={styles.select}
+          aria-label="Endpoint"
+          value={selectedIdx >= 0 ? String(selectedIdx) : ''}
+          onChange={(e) => handleSelect(e.target.value)}
+        >
+          <option value="">— select endpoint —</option>
+          {endpoints.map((ep, i) => (
+            <option key={i} value={String(i)}>{ep.method} {ep.path}</option>
+          ))}
+        </select>
+      </Section>
+
+      {(reqContract || resContract) && (
+        <Section label="CONTRACT">
+          <div className={styles.contractPreview}>
+            {reqContract && <ContractPreviewBlock label="Request" contract={reqContract} />}
+            {resContract && <ContractPreviewBlock label="Response" contract={resContract} />}
+          </div>
+        </Section>
+      )}
+    </>
+  );
+}
+
+function ContractPreviewBlock({ label, contract }: { label: string; contract: Contract }) {
+  return (
+    <div className={styles.contractPreviewBlock}>
+      <div className={styles.contractPreviewTitle}>{label}</div>
+      <div className={styles.contractPreviewName}>{contract.name}</div>
+      {contract.fields.map((f) => (
+        <div key={f.name} className={styles.contractPreviewField}>
+          {f.name}: <span>{f.type}</span>
+        </div>
+      ))}
     </div>
   );
 }

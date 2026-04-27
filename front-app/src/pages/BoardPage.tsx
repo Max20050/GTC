@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   DndContext,
   type DragEndEvent,
@@ -14,20 +14,35 @@ import { Inspector } from '../components/inspector/Inspector';
 import { Statusbar } from '../components/statusbar/Statusbar';
 import { GenerateModal } from '../components/generate/GenerateModal';
 import { useCanvasSync } from '../hooks/useCanvasSync';
+import { useDiagram } from '../hooks/useDiagram';
 import type { NodeType } from '../types/diagram';
 import styles from './BoardPage.module.css';
 
 export function BoardPage() {
-  const { boardId = 'default' } = useParams<{ boardId: string }>();
+  const { boardId = 'default', nodeId } = useParams<{ boardId: string; nodeId?: string }>();
+  const navigate = useNavigate();
+  const canvasId = nodeId ? `${boardId}:${nodeId}` : boardId;
+
   const [zoom, setZoom] = useState(1);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isDrawingZone, setIsDrawingZone] = useState(false);
 
-  const { initialRFNodes, initialRFEdges, loading, syncError } = useCanvasSync(boardId);
+  const { initialRFNodes, initialRFEdges, loading, syncError } = useCanvasSync(canvasId);
+  const nodes = useDiagram((s) => s.nodes);
+  const embeddedNodeLabel = nodeId ? nodes.find((n) => n.id === nodeId)?.label : undefined;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
+
+  const handleNodeDoubleClick = useCallback((nId: string, _label: string) => {
+    const state = useDiagram.getState();
+    const existing = state.nodes.find((n) => n.id === nId);
+    if (existing) {
+      state.updateNode(nId, { config: { ...existing.config, _hasEmbedded: true } });
+    }
+    navigate(`/boards/${boardId}/node/${nId}`);
+  }, [boardId, navigate]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, activatorEvent } = event;
@@ -52,6 +67,9 @@ export function BoardPage() {
           onGenerateDocs={() => setGenerateOpen(true)}
           isDrawingZone={isDrawingZone}
           onToggleZoneMode={() => setIsDrawingZone((v) => !v)}
+          parentBoardId={nodeId ? boardId : undefined}
+          embeddedNodeLabel={embeddedNodeLabel}
+          onNavigateUp={nodeId ? () => navigate(`/boards/${boardId}`) : undefined}
         />
         <div className={styles.main}>
           <ComponentPalette />
@@ -62,12 +80,13 @@ export function BoardPage() {
             </div>
           ) : (
             <Canvas
-              key={boardId}
+              key={canvasId}
               onZoomChange={setZoom}
               initialNodes={initialRFNodes}
               initialEdges={initialRFEdges}
               isDrawingZone={isDrawingZone}
               onZoneModeEnd={() => setIsDrawingZone(false)}
+              onNodeDoubleClick={nodeId ? undefined : handleNodeDoubleClick}
             />
           )}
           <Inspector />

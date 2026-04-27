@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useDiagram } from '../../hooks/useDiagram';
-import type { DiagramNode, NodeType } from '../../types/diagram';
+import type { DiagramNode, NodeType, Contract, Endpoint } from '../../types/diagram';
+import { ContractsEditor } from './ContractsEditor';
+import { EndpointsEditor } from './EndpointsEditor';
 import styles from './Detail.module.css';
 
 const NODE_TYPES: NodeType[] = [
@@ -88,7 +90,7 @@ export function NodeDetail({ node }: NodeDetailProps) {
   const [newVal, setNewVal] = useState('');
 
   const hints = CONFIG_HINTS[node.type] ?? {};
-  const unusedHints = Object.keys(hints).filter((k) => !(k in node.config));
+  const unusedHints = Object.keys(hints).filter((k) => !(k in node.config) && !k.startsWith('_'));
 
   const serviceName = String(node.config.service_name ?? '');
   const serviceSpecificHints =
@@ -151,9 +153,27 @@ export function NodeDetail({ node }: NodeDetailProps) {
         </select>
       </Section>
 
+      <Section label="CONTRACTS">
+        <ContractsEditor
+          node={node}
+          onChange={(contracts: Contract[]) =>
+            updateNode(node.id, { config: { ...node.config, _contracts: contracts } })
+          }
+        />
+      </Section>
+
+      <Section label="ENDPOINTS">
+        <EndpointsEditor
+          node={node}
+          onChange={(endpoints: Endpoint[]) =>
+            updateNode(node.id, { config: { ...node.config, _endpoints: endpoints } })
+          }
+        />
+      </Section>
+
       <Section label="CONFIGURATION">
         <div className={styles.configTable}>
-          {Object.entries(node.config).map(([k, v]) => {
+          {Object.entries(node.config).filter(([k]) => !k.startsWith('_')).map(([k, v]) => {
             const options = getFieldOptions(node.type, k);
             return (
               <div key={k} className={styles.configRow}>

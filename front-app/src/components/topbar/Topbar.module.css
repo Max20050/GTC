@@ -127,3 +127,23 @@
 .btnActive:hover {
   background: rgba(99, 179, 237, 0.25);
 }
+
+.breadcrumbLink {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+  font-family: var(--font-sans);
+  padding: 0;
+}
+
+.breadcrumbLink:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.sepIcon {
+  color: var(--text-muted);
+}
