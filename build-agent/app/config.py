@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     env: str = "development"
     llm_model: str = ""
     anthropic_api_key: str = ""
-    gemini_api_key: str = ""
+    gcp_project: str = ""
+    gcp_location: str = "us-central1"
     jwt_public_key: str = ""
 
 
