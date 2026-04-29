@@ -1,0 +1,23 @@
+Analyse the microservice below and produce an implementation plan.
+
+## Microservice
+{context}
+
+## Detail level: {detail_level}
+{detail_instructions}
+
+## Required JSON response schema
+{{
+  "steps": [
+    {{"order": 1, "title": "<step title>", "description": "<one or more sentences>"}}
+  ],
+  "prompts": [
+    {{
+      "filename": "01_scaffold.md",
+      "content": "## Goal\n...\n\n## Context\n...\n\n## Instructions\n...\n\n## Constraints\n..."
+    }}
+  ],
+  "assumptions": ["<inferred decision>"]
+}}
+
+Return only the JSON object. Do not wrap it in markdown fences.
