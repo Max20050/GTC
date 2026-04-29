@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import { X, Download, Copy, FileCode } from 'lucide-react';
+import { X, RotateCcw, Rocket } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGenerateDocs } from '../../hooks/useGenerateDocs';
-import type { DocFormat, GenerateOptions } from '../../lib/diagram-to-prompt';
-import { DocPreview } from './DocPreview';
+import { useBuildAgent } from '../../hooks/useBuildAgent';
+import { useDiagram } from '../../hooks/useDiagram';
 import styles from './GenerateModal.module.css';
 
-const FORMATS: DocFormat[] = ['CLAUDE.md', 'README.md', 'OpenAPI YAML', 'Terraform', 'Docker Compose'];
+const STEP_LABELS: Record<string, string> = {
+  generating_plan: 'Generating plan...',
+  recommending_skills: 'Recommending skills...',
+};
 
 interface GenerateModalProps {
   open: boolean;
@@ -14,43 +15,17 @@ interface GenerateModalProps {
 }
 
 export function GenerateModal({ open, onClose }: GenerateModalProps) {
-  const [format, setFormat] = useState<DocFormat>('CLAUDE.md');
-  const [scope, setScope] = useState<'full' | 'selected'>('full');
-  const [includeApiSpecs, setIncludeApiSpecs] = useState(true);
-  const [includeDataModels, setIncludeDataModels] = useState(true);
-  const [includeAuthFlows, setIncludeAuthFlows] = useState(true);
-  const [includeEnvVars, setIncludeEnvVars] = useState(true);
-  const [includeMermaid, setIncludeMermaid] = useState(false);
+  const { status, step, result, error, build, retry } = useBuildAgent();
+  const selectedNodeId = useDiagram((s) => s.selection.id);
 
-  const { output, loading, error, generate } = useGenerateDocs();
+  const isRunning = status === 'running' || status === 'pending';
 
-  function handleGenerate() {
-    const opts: GenerateOptions = {
-      format,
-      scope,
-      includeApiSpecs,
-      includeDataModels,
-      includeAuthFlows,
-      includeEnvVars,
-      includeMermaid,
-    };
-    generate(opts);
+  function handleBuild() {
+    if (selectedNodeId) build(selectedNodeId);
   }
 
-  function handleCopy() {
-    if (output) navigator.clipboard.writeText(output);
-  }
-
-  function handleDownload() {
-    const ext = format.endsWith('.md') ? 'md' : format.endsWith('YAML') ? 'yaml' : 'tf';
-    const blob = new Blob([output], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = format.toLowerCase().replace(/\s/g, '-').replace('.', '-') + '.' + ext;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  const stepLabel = step ? (STEP_LABELS[step] ?? step) : null;
+  const showRetry = status === 'failed' || (status === 'done' && (result?.warnings?.length ?? 0) > 0);
 
   return (
     <AnimatePresence>
@@ -70,89 +45,88 @@ export function GenerateModal({ open, onClose }: GenerateModalProps) {
             transition={{ duration: 0.15 }}
           >
             <div className={styles.header}>
-              <h2 className={styles.title}>Generate Documentation</h2>
-              <button className={styles.closeBtn} onClick={onClose}>
+              <h2 className={styles.title}>Build Implementation</h2>
+              <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
                 <X size={16} />
               </button>
             </div>
 
             <div className={styles.body}>
               <div className={styles.controls}>
-                <Field label="Output format">
-                  <div className={styles.radioGroup}>
-                    {FORMATS.map((f) => (
-                      <label key={f} className={styles.radioLabel}>
-                        <input
-                          type="radio"
-                          name="format"
-                          value={f}
-                          checked={format === f}
-                          onChange={() => setFormat(f)}
-                        />
-                        {f}
-                      </label>
-                    ))}
-                  </div>
-                </Field>
-
-                <Field label="Scope">
-                  <div className={styles.radioGroup}>
-                    <label className={styles.radioLabel}>
-                      <input
-                        type="radio"
-                        name="scope"
-                        value="full"
-                        checked={scope === 'full'}
-                        onChange={() => setScope('full')}
-                      />
-                      Full diagram
-                    </label>
-                    <label className={styles.radioLabel}>
-                      <input
-                        type="radio"
-                        name="scope"
-                        value="selected"
-                        checked={scope === 'selected'}
-                        onChange={() => setScope('selected')}
-                      />
-                      Selected nodes
-                    </label>
-                  </div>
-                </Field>
-
-                <Field label="Include">
-                  <div className={styles.checkGroup}>
-                    <Check label="API specs" checked={includeApiSpecs} onChange={setIncludeApiSpecs} />
-                    <Check label="Data models" checked={includeDataModels} onChange={setIncludeDataModels} />
-                    <Check label="Auth flows" checked={includeAuthFlows} onChange={setIncludeAuthFlows} />
-                    <Check label="Env vars" checked={includeEnvVars} onChange={setIncludeEnvVars} />
-                    <Check label="Mermaid diagram" checked={includeMermaid} onChange={setIncludeMermaid} />
-                  </div>
-                </Field>
+                <div className={styles.field}>
+                  <span className={styles.fieldLabel}>Target node</span>
+                  <span className={styles.nodeId}>
+                    {selectedNodeId ?? <em>No node selected</em>}
+                  </span>
+                </div>
 
                 <button
                   className={styles.generateBtn}
-                  onClick={handleGenerate}
-                  disabled={loading}
+                  onClick={handleBuild}
+                  disabled={isRunning || !selectedNodeId}
                 >
-                  <FileCode size={14} />
-                  {loading ? 'Generating…' : 'Generate with Claude'}
+                  <Rocket size={14} />
+                  {isRunning ? 'Building...' : 'Build'}
                 </button>
 
+                {showRetry && (
+                  <button className={styles.retryBtn} onClick={retry}>
+                    <RotateCcw size={13} /> Retry
+                  </button>
+                )}
+
                 {error && <p className={styles.error}>{error}</p>}
+
+                {result?.warnings && result.warnings.length > 0 && (
+                  <div className={styles.warnings}>
+                    {result.warnings.map((w, i) => (
+                      <p key={i} className={styles.warning}>{w}</p>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className={styles.preview}>
-                <DocPreview content={output} format={format} />
-                {output && (
-                  <div className={styles.previewActions}>
-                    <button className={styles.actionBtn} onClick={handleCopy}>
-                      <Copy size={13} /> Copy
-                    </button>
-                    <button className={styles.actionBtn} onClick={handleDownload}>
-                      <Download size={13} /> Download
-                    </button>
-                  </div>
+              <div className={styles.results}>
+                {!result && !isRunning && !error && (
+                  <p className={styles.placeholder}>
+                    Select a node and click Build to generate an implementation plan.
+                  </p>
+                )}
+
+                {isRunning && stepLabel && (
+                  <p className={styles.stepLabel}>{stepLabel}</p>
+                )}
+
+                {result && (
+                  <>
+                    {result.plan.length > 0 && (
+                      <section className={styles.section}>
+                        <h3 className={styles.sectionTitle}>Implementation Plan</h3>
+                        <ol className={styles.planList}>
+                          {result.plan.map((s) => (
+                            <li key={s.order} className={styles.planStep}>
+                              <strong>{s.title}</strong>
+                              <p>{s.description}</p>
+                            </li>
+                          ))}
+                        </ol>
+                      </section>
+                    )}
+
+                    {result.prompts.length > 0 && (
+                      <section className={styles.section}>
+                        <h3 className={styles.sectionTitle}>Prompt Files</h3>
+                        <ol className={styles.promptList}>
+                          {result.prompts.map((p, i) => (
+                            <li key={p.filename} className={styles.promptFile}>
+                              <span className={styles.promptIndex}>{i + 1}.</span>
+                              <span className={styles.promptName}>{p.filename}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </section>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -160,23 +134,5 @@ export function GenerateModal({ open, onClose }: GenerateModalProps) {
         </motion.div>
       )}
     </AnimatePresence>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className={styles.field}>
-      <span className={styles.fieldLabel}>{label}</span>
-      {children}
-    </div>
-  );
-}
-
-function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <label className={styles.checkLabel}>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      {label}
-    </label>
   );
 }

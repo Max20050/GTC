@@ -30,9 +30,13 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/ws/, ''),
       },
-      // AI generate proxy
-      '/api': {
-        target: 'http://localhost:3001',
+      // Build-agent — http://localhost:8000
+      '/build': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/jobs': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
       },
     },
