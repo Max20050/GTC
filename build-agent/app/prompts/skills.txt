@@ -1,0 +1,24 @@
+Recommend the best libraries and tools for building the microservice described below.
+
+## Microservice
+{context}
+
+## Stack: {stack}
+## Known preferred libraries for this stack: {preferred_libs}
+
+Return a ranked list of the most relevant libraries and tools.
+For each item explain why it is appropriate for this specific microservice (not just the stack in general).
+Include real documentation URLs.
+
+## Required JSON response schema
+{{
+  "skills": [
+    {{
+      "name": "<library or tool name>",
+      "reason": "<one or two sentences specific to this microservice>",
+      "docs_url": "<canonical documentation URL>"
+    }}
+  ]
+}}
+
+Return only the JSON object. Do not wrap it in markdown fences.
