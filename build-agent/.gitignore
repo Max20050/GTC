@@ -1,0 +1,33 @@
+# Secrets & environment
+.env
+*.pem
+*.key
+*.p12
+*.pfx
+keys/
+
+# Claude local files
+.claude/issues/
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
