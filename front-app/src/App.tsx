@@ -4,6 +4,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
 import { BoardPage } from './pages/BoardPage';
 import { OrgPage } from './pages/OrgPage';
+import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 import { getToken } from './lib/auth-api';
 
 function ProtectedRoute({ element }: { element: React.ReactElement }) {
@@ -14,6 +15,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/auth/callback"   element={<OAuthCallbackPage />} />
         <Route path="/login"           element={<LoginPage />} />
         <Route path="/register"        element={<RegisterPage />} />
         <Route path="/home"            element={<ProtectedRoute element={<HomePage />} />} />

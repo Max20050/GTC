@@ -44,7 +44,10 @@ export const authApi = {
   refresh: (refreshToken: string) =>
     post<AuthResponse>('/refresh', { refresh_token: refreshToken }),
 
-  googleLoginUrl: () => `${BASE}/oauth/google`,
+  googleLoginUrl: () => {
+    const callback = `${window.location.origin}/auth/callback`;
+    return `${BASE}/oauth/google?redirect_uri=${encodeURIComponent(callback)}`;
+  },
 };
 
 // ── Token helpers ─────────────────────────────────────────────────────────────

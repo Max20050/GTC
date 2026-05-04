@@ -2,7 +2,7 @@ services:
   build-agent:
     build: .
     ports:
-      - "8000:8000"
+      - "8003:8003"
     env_file:
       - .env
     environment:
