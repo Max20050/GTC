@@ -89,6 +89,11 @@ export function useCanvasSync(canvasId: string) {
   const [loading, setLoading] = useState(true);
   const [syncError, setSyncError] = useState<string | null>(null);
 
+  // Always reflects the current canvasId so the debounced save closure never
+  // captures a stale id when the component re-uses across route changes.
+  const canvasIdRef = useRef(canvasId);
+  canvasIdRef.current = canvasId;
+
   const setNodes = useDiagram((s) => s.setNodes);
   const setConnectors = useDiagram((s) => s.setConnectors);
   const markSaved = useDiagram((s) => s.markSaved);
@@ -129,7 +134,7 @@ export function useCanvasSync(canvasId: string) {
   const saveRef = useRef(
     debounce((nodes: DiagramNode[], connectors: Connector[]) => {
       saveCanvas({
-        canvas_id: canvasId,
+        canvas_id: canvasIdRef.current,
         nodes: nodes.map(storeNodeToApi),
         edges: connectors.map(storeConnectorToApi),
       })
@@ -154,13 +159,13 @@ export function useCanvasSync(canvasId: string) {
   const forceManualSave = useCallback(() => {
     const { nodes, connectors } = useDiagram.getState();
     saveCanvas({
-      canvas_id: canvasId,
+      canvas_id: canvasIdRef.current,
       nodes: nodes.map(storeNodeToApi),
       edges: connectors.map(storeConnectorToApi),
     })
       .then(() => useDiagram.getState().markSaved())
       .catch(console.error);
-  }, [canvasId]);
+  }, []);
 
   return { initialRFNodes, initialRFEdges, loading, syncError, forceManualSave };
 }
