@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   DndContext,
   type DragEndEvent,
@@ -14,13 +14,14 @@ import { Inspector } from '../components/inspector/Inspector';
 import { Statusbar } from '../components/statusbar/Statusbar';
 import { GenerateModal } from '../components/generate/GenerateModal';
 import { useCanvasSync } from '../hooks/useCanvasSync';
-import { useDiagram } from '../hooks/useDiagram';
+import { createEmbed } from '../lib/canvas-api';
 import type { NodeType } from '../types/diagram';
 import styles from './BoardPage.module.css';
 
 export function BoardPage() {
   const { boardId = 'default', nodeId } = useParams<{ boardId: string; nodeId?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const canvasId = nodeId ? `${boardId}:${nodeId}` : boardId;
 
   const [zoom, setZoom] = useState(1);
@@ -28,20 +29,17 @@ export function BoardPage() {
   const [isDrawingZone, setIsDrawingZone] = useState(false);
 
   const { initialRFNodes, initialRFEdges, loading, syncError } = useCanvasSync(canvasId);
-  const nodes = useDiagram((s) => s.nodes);
-  const embeddedNodeLabel = nodeId ? nodes.find((n) => n.id === nodeId)?.label : undefined;
+  const embeddedNodeLabel = nodeId
+    ? (location.state as { embeddedNodeLabel?: string } | null)?.embeddedNodeLabel
+    : undefined;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
 
-  const handleNodeDoubleClick = useCallback((nId: string, _label: string) => {
-    const state = useDiagram.getState();
-    const existing = state.nodes.find((n) => n.id === nId);
-    if (existing) {
-      state.updateNode(nId, { config: { ...existing.config, _hasEmbedded: true } });
-    }
-    navigate(`/boards/${boardId}/node/${nId}`);
+  const handleNodeDoubleClick = useCallback((nId: string, label: string) => {
+    createEmbed(boardId, nId).catch(console.error);
+    navigate(`/boards/${boardId}/node/${nId}`, { state: { embeddedNodeLabel: label } });
   }, [boardId, navigate]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {

@@ -8,6 +8,11 @@ import (
 	"canvas-service/pkg/response"
 )
 
+// path layout after stripping /canvas/:
+//   ""                              → POST /canvas/       (createCanvas)
+//   "{id}"                          → GET/PUT/DELETE      (single canvas)
+//   "{parentId}/nodes/{nodeId}/embed" → POST              (createEmbed)
+
 type Handler struct {
 	svc  *Service
 	auth func(http.HandlerFunc) http.HandlerFunc
@@ -26,10 +31,11 @@ func (h *Handler) health(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// routeCanvas dispatches /canvas/{canvas_id} to the appropriate method handler.
+// routeCanvas dispatches /canvas/... to the appropriate method handler.
 func (h *Handler) routeCanvas(w http.ResponseWriter, r *http.Request) {
-	canvasID := strings.TrimPrefix(r.URL.Path, "/canvas/")
-	if canvasID == "" {
+	tail := strings.TrimPrefix(r.URL.Path, "/canvas/")
+
+	if tail == "" {
 		if r.Method == http.MethodPost {
 			h.createCanvas(w, r)
 			return
@@ -38,6 +44,18 @@ func (h *Handler) routeCanvas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// /canvas/{parentId}/nodes/{nodeId}/embed
+	parts := strings.Split(tail, "/")
+	if len(parts) == 4 && parts[1] == "nodes" && parts[3] == "embed" {
+		if r.Method != http.MethodPost {
+			response.Error(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		h.createEmbed(w, r, parts[0], parts[2])
+		return
+	}
+
+	canvasID := tail
 	switch r.Method {
 	case http.MethodGet:
 		h.getCanvas(w, r, canvasID)
@@ -48,6 +66,15 @@ func (h *Handler) routeCanvas(w http.ResponseWriter, r *http.Request) {
 	default:
 		response.Error(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+func (h *Handler) createEmbed(w http.ResponseWriter, r *http.Request, parentID, nodeID string) {
+	embedded, err := h.svc.CreateEmbed(parentID, nodeID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.JSON(w, http.StatusOK, embedded)
 }
 
 func (h *Handler) createCanvas(w http.ResponseWriter, r *http.Request) {

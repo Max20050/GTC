@@ -59,3 +59,12 @@ export async function saveCanvas(doc: CanvasDocument): Promise<void> {
   });
   if (!res.ok) throw new Error(`save failed: ${res.status}`);
 }
+
+export async function createEmbed(parentId: string, nodeId: string): Promise<CanvasDocument> {
+  const res = await fetch(`${BASE}/canvas/${parentId}/nodes/${nodeId}/embed`, {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`create embed failed: ${res.status}`);
+  return res.json() as Promise<CanvasDocument>;
+}
