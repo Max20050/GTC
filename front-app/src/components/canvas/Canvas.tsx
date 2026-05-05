@@ -61,6 +61,24 @@ export function Canvas({ onZoomChange, initialNodes = [], initialEdges = [], isD
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
 
+  // Sync Zustand node data (label, type, config) back into RF so inspector edits
+  // appear on the canvas in real time. Position is owned by RF — we never touch it here.
+  useEffect(() => {
+    const unsub = useDiagram.subscribe((state, prev) => {
+      if (state.nodes === prev.nodes) return;
+      setRfNodes((nds) =>
+        nds.map((rfNode) => {
+          const n = state.nodes.find((x) => x.id === rfNode.id);
+          if (!n) return rfNode;
+          const d = rfNode.data as { label: string; nodeType: string; config: Record<string, unknown> };
+          if (d.label === n.label && d.nodeType === n.type && d.config === n.config) return rfNode;
+          return { ...rfNode, data: { label: n.label, nodeType: n.type, config: n.config } };
+        })
+      );
+    });
+    return unsub;
+  }, [setRfNodes]);
+
   const { setNodeRef: setDropRef } = useDroppable({ id: 'canvas-drop-zone' });
 
   const onConnect: OnConnect = useCallback(

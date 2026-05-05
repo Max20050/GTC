@@ -140,13 +140,15 @@ export function useCanvasSync(canvasId: string) {
       })
         .then(() => useDiagram.getState().markSaved())
         .catch((err: unknown) => console.error('Auto-save failed:', err));
-    }, 1500)
+    }, 600)
   );
 
-  // Subscribe to Zustand changes and auto-save (imperative — no React render cycle)
+  // Subscribe to Zustand changes and auto-save (imperative — no React render cycle).
+  // Only fires when nodes or connectors change — viewport/selection changes are ignored
+  // so they don't reset the debounce timer.
   useEffect(() => {
-    const unsub = useDiagram.subscribe((state) => {
-      if (!loading) {
+    const unsub = useDiagram.subscribe((state, prev) => {
+      if (!loading && (state.nodes !== prev.nodes || state.connectors !== prev.connectors)) {
         saveRef.current(state.nodes, state.connectors);
       }
     });
